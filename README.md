@@ -1,0 +1,2 @@
+# Always
+Quantumult X 
