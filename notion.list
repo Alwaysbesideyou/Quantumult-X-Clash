@@ -1,0 +1,7 @@
+HOST-SUFFIX,loggly.com,proxy
+HOST-SUFFIX,segment.com,proxy
+HOST-SUFFIX,intercom.io,proxy
+HOST-SUFFIX,intercomcdn.comm,proxy
+HOST-SUFFIX,amplitude.comm,proxy
+HOST-SUFFIX,notion.so,proxy
+HOST-SUFFIX,amazonaws.com,proxy
