@@ -1,2 +1,2 @@
 # Always
-Quantumult X 
+Do Myself
