@@ -1,4 +1,4 @@
-
+hostname = apiwz.midukanshu.com,c.tieba.baidu.com,www.52pojie.cn,music.163.com,*.smzdm.com,trade-acs.m.taobao.com,api.m.jd.com,mp.weixin.qq.com,api.ithome.com,api.1sapp.com,*.iqiyi.com,www.gstatic.com,*.youth.cn,ios.baertt.com,act.10010.com,m.client.10010.com,h5.m.jd.com,nebula.kuaishou.com
 
 ^https?://api\.m\.jd\.com/client\.action\?functionId=(wareBusiness|serverConfig) url script-response-body eval_script.js
 
@@ -13,3 +13,5 @@
 ^https?:\/\/api\.ithome\.com\/json\/listpage\/news.* url script-response-body eval_script.js
 
 ^https?://m.client.10010.com/uniAdmsInterface/getHomePageAd url script-response-body eval_script.js
+
+https:\/\/nebula\.kuaishou\.com\/rest\/n\/nebula\/activity\/earn\/overview url script-request-header eval_script.js
