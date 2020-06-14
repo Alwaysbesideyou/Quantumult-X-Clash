@@ -4,18 +4,4 @@
 hostname = %INSERT% apiwz.midukanshu.com,c.tieba.baidu.com,www.52pojie.cn,music.163.com,*.smzdm.com,trade-acs.m.taobao.com,api.m.jd.com,mp.weixin.qq.com,api.ithome.com,api.1sapp.com,*.iqiyi.com,www.gstatic.com,*.youth.cn,ios.baertt.com,act.10010.com,m.client.10010.com,h5.m.jd.com,nebula.kuaishou.com
 
 [Script]
-eval_script.js = type=http-response,requires-body=1,pattern=^https?://api\.m\.jd\.com/client\.action\?functionId=(wareBusiness|serverConfig),script-path=eval_script.js
-
-eval_script.js = type=http-response,requires-body=1,pattern=^http://.+/amdc/mobileDispatch,script-path=eval_script.js
-
-eval_script.js = type=http-response,requires-body=1,pattern=^https?://trade-acs\.m\.taobao\.com/gw/mtop\.taobao\.detail\.getdetail,script-path=eval_script.js
-
-eval_script.js = type=http-response,requires-body=1,pattern=^https?:\/\/api\.ithome\.com\/json\/slide\/index,script-path=eval_script.js
-
-eval_script.js = type=http-response,requires-body=1,pattern=^https?:\/\/api\.ithome\.com\/json\/newslist\/new,script-path=eval_script.js
-
-eval_script.js = type=http-response,requires-body=1,pattern=^https?:\/\/api\.ithome\.com\/json\/listpage\/news.*,script-path=eval_script.js
-
-eval_script.js = type=http-response,requires-body=1,pattern=^https?://m.client.10010.com/uniAdmsInterface/getHomePageAd,script-path=eval_script.js
-
-eval_script.js = type=http-request,pattern=https:\/\/nebula\.kuaishou\.com\/rest\/n\/nebula\/activity\/earn\/overview,script-path=eval_script.js
+eval_script(Cookie).js = type=http-request,pattern=https:\/\/nebula\.kuaishou\.com\/rest\/n\/nebula\/activity\/earn\/overview,script-path=eval_script(Cookie).js
