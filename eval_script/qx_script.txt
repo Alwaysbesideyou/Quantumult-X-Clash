@@ -1,15 +1,15 @@
 
 
-^https?://api\.m\.jd\.com/client\.action\?functionId=(wareBusiness|serverConfig) url script-response-body https://raw.githubusercontent.com/yichahucha/surge/master/jd_price.js
+^https?://api\.m\.jd\.com/client\.action\?functionId=(wareBusiness|serverConfig) url script-response-body eval_script.js
 
-^http://.+/amdc/mobileDispatch url script-response-body https://raw.githubusercontent.com/yichahucha/surge/master/tb_price_lite.js
+^http://.+/amdc/mobileDispatch url script-response-body eval_script.js
 
-^https?://trade-acs\.m\.taobao\.com/gw/mtop\.taobao\.detail\.getdetail url script-response-body https://raw.githubusercontent.com/yichahucha/surge/master/tb_price_lite.js
+^https?://trade-acs\.m\.taobao\.com/gw/mtop\.taobao\.detail\.getdetail url script-response-body eval_script.js
 
-^https?:\/\/api\.ithome\.com\/json\/slide\/index url script-response-body https://raw.githubusercontent.com/nzw9314/QuantumultX/master/Script/ITHome.js
+^https?:\/\/api\.ithome\.com\/json\/slide\/index url script-response-body eval_script.js
 
-^https?:\/\/api\.ithome\.com\/json\/newslist\/new url script-response-body https://raw.githubusercontent.com/nzw9314/QuantumultX/master/Script/ITHome.js
+^https?:\/\/api\.ithome\.com\/json\/newslist\/new url script-response-body eval_script.js
 
-^https?:\/\/api\.ithome\.com\/json\/listpage\/news.* url script-response-body https://raw.githubusercontent.com/nzw9314/QuantumultX/master/Script/ITHome.js
+^https?:\/\/api\.ithome\.com\/json\/listpage\/news.* url script-response-body eval_script.js
 
-^https?://m.client.10010.com/uniAdmsInterface/getHomePageAd url script-response-body https://raw.githubusercontent.com/nzw9314/QuantumultX/master/Script/china_unicom.js
+^https?://m.client.10010.com/uniAdmsInterface/getHomePageAd url script-response-body eval_script.js
