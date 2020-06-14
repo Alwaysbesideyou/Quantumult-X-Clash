@@ -1,7 +1,7 @@
 #!name=eval_script.js module
 
 [MITM]
-hostname = %INSERT% trade-acs.m.taobao.com,api.m.jd.com,api.ithome.com,m.youtube.com,s.youtube.com,youtubei.googleapis.com,*.googlevideo.com,api.bilibili.com,mp.weixin.qq.com
+hostname = %INSERT% trade-acs.m.taobao.com,api.m.jd.com,api.ithome.com,mp.weixin.qq.com
 
 [Script]
 eval_script.js = type=http-response,requires-body=1,pattern=^https://app.bilibili.com/x/resource/show/tab\?access_key,script-path=eval_script.js
