@@ -1,0 +1,7 @@
+#!name=eval_script.js module
+
+[MITM]
+hostname = %INSERT% apiwz.midukanshu.com,c.tieba.baidu.com,www.52pojie.cn,music.163.com,*.smzdm.com,trade-acs.m.taobao.com,api.m.jd.com,mp.weixin.qq.com,api.ithome.com,api.1sapp.com,*.iqiyi.com,www.gstatic.com,*.youth.cn,ios.baertt.com,act.10010.com,m.client.10010.com,h5.m.jd.com,nebula.kuaishou.com
+
+[Script]
+eval_script.js = type=http-request,pattern=https:\/\/nebula\.kuaishou\.com\/rest\/n\/nebula\/activity\/earn\/overview,script-path=eval_script.js
