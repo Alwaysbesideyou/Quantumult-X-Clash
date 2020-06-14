@@ -4,16 +4,16 @@
 
 
 [Script]
-eval_script.js = type=http-response,requires-body=1,pattern=^https?://api\.m\.jd\.com/client\.action\?functionId=(wareBusiness|serverConfig),script-path=yichahuha/eval_script.js
+jd_price.js = type=http-response,requires-body=1,pattern=^https?://api\.m\.jd\.com/client\.action\?functionId=(wareBusiness|serverConfig),script-path=https://raw.githubusercontent.com/yichahucha/surge/master/jd_price.js
 
-eval_script.js = type=http-response,requires-body=1,pattern=^http://.+/amdc/mobileDispatch,script-path=yichahuha/eval_script.js
+tb_price_lite.js = type=http-response,requires-body=1,pattern=^http://.+/amdc/mobileDispatch,script-path=https://raw.githubusercontent.com/yichahucha/surge/master/tb_price_lite.js
 
-eval_script.js = type=http-response,requires-body=1,pattern=^https?://trade-acs\.m\.taobao\.com/gw/mtop\.taobao\.detail\.getdetail,script-path=yichahuha/eval_script.js
+tb_price_lite.js = type=http-response,requires-body=1,pattern=^https?://trade-acs\.m\.taobao\.com/gw/mtop\.taobao\.detail\.getdetail,script-path=https://raw.githubusercontent.com/yichahucha/surge/master/tb_price_lite.js
 
-eval_script.js = type=http-response,requires-body=1,pattern=^https?:\/\/api\.ithome\.com\/json\/slide\/index,script-path=yichahuha/eval_script.js
+ITHome.js = type=http-response,requires-body=1,pattern=^https?:\/\/api\.ithome\.com\/json\/slide\/index,script-path=https://raw.githubusercontent.com/nzw9314/QuantumultX/master/Script/ITHome.js
 
-eval_script.js = type=http-response,requires-body=1,pattern=^https?:\/\/api\.ithome\.com\/json\/newslist\/new,script-path=yichahuha/eval_script.js
+ITHome.js = type=http-response,requires-body=1,pattern=^https?:\/\/api\.ithome\.com\/json\/newslist\/new,script-path=https://raw.githubusercontent.com/nzw9314/QuantumultX/master/Script/ITHome.js
 
-eval_script.js = type=http-response,requires-body=1,pattern=^https?:\/\/api\.ithome\.com\/json\/listpage\/news.*,script-path=yichahuha/eval_script.js
+ITHome.js = type=http-response,requires-body=1,pattern=^https?:\/\/api\.ithome\.com\/json\/listpage\/news.*,script-path=https://raw.githubusercontent.com/nzw9314/QuantumultX/master/Script/ITHome.js
 
-eval_script.js = type=http-response,requires-body=1,pattern=^https?://m.client.10010.com/uniAdmsInterface/getHomePageAd,script-path=yichahuha/eval_script.js
+china_unicom.js = type=http-response,requires-body=1,pattern=^https?://m.client.10010.com/uniAdmsInterface/getHomePageAd,script-path=https://raw.githubusercontent.com/nzw9314/QuantumultX/master/Script/china_unicom.js
