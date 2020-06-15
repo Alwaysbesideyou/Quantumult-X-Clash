@@ -1,26 +1,14 @@
 #!name=eval_script.js module
 
 [MITM]
-hostname = %INSERT% trade-acs.m.taobao.com,api.m.jd.com,api.ithome.com,mp.weixin.qq.com,8.8.8.8
+hostname = %INSERT% trade-acs.m.taobao.com,api.m.jd.com,api.ithome.com,mp.weixin.qq.com,8.8.8.8,dict.eudic.net,m.client.10010.com
 
 [Script]
 eval_script.js = type=http-request,requires-body=1,pattern=^https://8.8.8.8/api,script-path=eval_script.js
 
 eval_script.js = type=http-response,requires-body=1,pattern=^https://8.8.8.8/(home|app|log\/),script-path=eval_script.js
 
-eval_script.js = type=http-response,requires-body=1,pattern=^https://app.bilibili.com/x/resource/show/tab\?access_key,script-path=eval_script.js
-
-eval_script.js = type=http-response,requires-body=1,pattern=^https://app.bilibili.com/x/v2/feed/index\?access_key,script-path=eval_script.js
-
-eval_script.js = type=http-response,requires-body=1,pattern=^https://app.bilibili.com/x/v2/account/mine\?access_key,script-path=eval_script.js
-
-eval_script.js = type=http-response,requires-body=1,pattern=^https://app.bilibili.com/x/v2/view\?access_key,script-path=eval_script.js
-
-eval_script.js = type=http-response,requires-body=1,pattern=^https://app.bilibili.com/x/v2/rank,script-path=eval_script.js
-
-eval_script.js = type=http-response,requires-body=1,pattern=^https://api.bilibili.com/x/v2/reply/main\?access_key,script-path=eval_script.js
-
-eval_script.js = type=http-response,requires-body=1,pattern=^https://app.bilibili.com/x/v2/show/popular/index\?access_key,script-path=eval_script.js
+eval_script.js = type=http-response,requires-body=1,pattern=^https:\/\/app\.bilibili\.com\/(search\/resource|x\/(resource\/show\/tab|v2\/(view|rank|feed|reply\/main|account\/mine))),script-path=eval_script.js
 
 eval_script.js = type=http-response,requires-body=1,pattern=https:\/\/ap(p|i)\.bilibili\.com\/((pgc\/player\/api\/playurl)|(x\/v2\/account\/myinfo\?)|(x\/v2\/account/mine\?)),script-path=eval_script.js
 
@@ -39,3 +27,7 @@ eval_script.js = type=http-response,requires-body=1,pattern=^https?://api\.m\.jd
 eval_script.js = type=http-response,requires-body=1,pattern=^http://.+/amdc/mobileDispatch,script-path=eval_script.js
 
 eval_script.js = type=http-response,requires-body=1,pattern=^https?://trade-acs\.m\.taobao\.com/gw/mtop\.taobao\.detail\.getdetail,script-path=eval_script.js
+
+eval_script.js = type=http-response,requires-body=1,pattern=^https?://m.client.10010.com/uniAdmsInterface/getHomePageAd,script-path=eval_script.js
+
+eval_script.js = type=http-response,requires-body=1,pattern=^https:\/\/dict\.eudic\.net\/jingting\/GetThisChapterTaskStatus?,script-path=eval_script.js
