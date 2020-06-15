@@ -1,22 +1,10 @@
-hostname = trade-acs.m.taobao.com,api.m.jd.com,api.ithome.com,mp.weixin.qq.com,8.8.8.8
+hostname = trade-acs.m.taobao.com,api.m.jd.com,api.ithome.com,mp.weixin.qq.com,8.8.8.8,dict.eudic.net,m.client.10010.com
 
 ^https://8.8.8.8/api url script-request-body eval_script.js
 
 ^https://8.8.8.8/(home|app|log\/) url script-response-body eval_script.js
 
-^https://app.bilibili.com/x/resource/show/tab\?access_key url script-response-body eval_script.js
-
-^https://app.bilibili.com/x/v2/feed/index\?access_key url script-response-body eval_script.js
-
-^https://app.bilibili.com/x/v2/account/mine\?access_key url script-response-body eval_script.js
-
-^https://app.bilibili.com/x/v2/view\?access_key url script-response-body eval_script.js
-
-^https://app.bilibili.com/x/v2/rank url script-response-body eval_script.js
-
-^https://api.bilibili.com/x/v2/reply/main\?access_key url script-response-body eval_script.js
-
-^https://app.bilibili.com/x/v2/show/popular/index\?access_key url script-response-body eval_script.js
+^https:\/\/app\.bilibili\.com\/(search\/resource|x\/(resource\/show\/tab|v2\/(view|rank|feed|reply\/main|account\/mine))) url script-response-body eval_script.js
 
 https:\/\/ap(p|i)\.bilibili\.com\/((pgc\/player\/api\/playurl)|(x\/v2\/account\/myinfo\?)|(x\/v2\/account/mine\?)) url script-response-body eval_script.js
 
@@ -35,3 +23,7 @@ https:\/\/ap(p|i)\.bilibili\.com\/((pgc\/player\/api\/playurl)|(x\/v2\/account\/
 ^http://.+/amdc/mobileDispatch url script-response-body eval_script.js
 
 ^https?://trade-acs\.m\.taobao\.com/gw/mtop\.taobao\.detail\.getdetail url script-response-body eval_script.js
+
+^https?://m.client.10010.com/uniAdmsInterface/getHomePageAd url script-response-body eval_script.js
+
+^https:\/\/dict\.eudic\.net\/jingting\/GetThisChapterTaskStatus? url script-response-body eval_script.js
