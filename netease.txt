@@ -1,0 +1,5 @@
+http=106.52.127.72:19951, fast-open=false, udp-relay=false, tag=🎧 解锁网易云音乐
+http=taron.top:100, fast-open=false, udp-relay=false, tag=🎧 Netease（解析错误）
+shadowsocks=music.desperadoj.com:30003, method=aes-128-gcm, password=desperadoj.com_free_proxy_doe3, fast-open=false, udp-relay=false, tag=🎵 网易云音乐（解析错误）
+http=music.griouges.cn:39000, fast-open=false, udp-relay=false, tag=🎵 解锁节点4
+http=aimer.one:3333, fast-open=false, udp-relay=false, tag=🎧 解锁网易云音乐2
