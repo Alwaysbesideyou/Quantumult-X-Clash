@@ -1,0 +1,27 @@
+hostname = trade-acs.m.taobao.com,api.m.jd.com,api.ithome.com,mp.weixin.qq.com,8.8.8.8,m.client.10010.com
+
+^https://8.8.8.8/api url script-request-body eval_script.js
+
+^https://8.8.8.8/(home|app|log\/) url script-response-body eval_script.js
+
+^https:\/\/app\.bilibili\.com\/(search\/resource|x\/(resource\/show\/tab|v2\/(view|rank|feed|reply\/main|account\/mine))) url script-response-body eval_script.js
+
+https:\/\/ap(p|i)\.bilibili\.com\/((pgc\/player\/api\/playurl)|(x\/v2\/account\/myinfo\?)|(x\/v2\/account/mine\?)) url script-response-body eval_script.js
+
+^https:\/\/app\.bilibili\.com\/x\/v2\/space\?access_key url script-response-body eval_script.js
+
+^https?:\/\/mp\.weixin\.qq\.com\/mp\/getappmsgad url script-response-body eval_script.js
+
+^https?:\/\/api\.ithome\.com\/json\/slide\/index url script-response-body eval_script.js
+
+^https?:\/\/api\.ithome\.com\/json\/newslist\/new url script-response-body eval_script.js
+
+^https?:\/\/api\.ithome\.com\/json\/listpage\/news.* url script-response-body eval_script.js
+
+^https?://api\.m\.jd\.com/client\.action\?functionId=(wareBusiness|serverConfig) url script-response-body eval_script.js
+
+^http://.+/amdc/mobileDispatch url script-response-body eval_script.js
+
+^https?://trade-acs\.m\.taobao\.com/gw/mtop\.taobao\.detail\.getdetail url script-response-body eval_script.js
+
+^https?://m.client.10010.com/uniAdmsInterface/getHomePageAd url script-response-body eval_script.js
