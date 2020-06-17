@@ -28,7 +28,7 @@ https:\/\/api\.m\.jd\.com\/client\.action.*functionId=signBean url script-reques
 
 https?:\/\/c\.tieba\.baidu\.com\/c\/s\/login url script-request-header eval_script.js
 
-^https?:\/\/music\.163\.com url script-request-header eval_script.js
+^https://music.163.com/weapi/user/level url script-request-body eval_script.js
 
 https:\/\/www\.52pojie\.cn\/home\.php\?mod=space url script-request-header eval_script.js
 
