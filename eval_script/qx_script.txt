@@ -1,4 +1,4 @@
-hostname = trade-acs.m.taobao.com,api.m.jd.com,api.ithome.com,mp.weixin.qq.com,8.8.8.8,m.client.10010.com
+hostname = trade-acs.m.taobao.com,api.m.jd.com,api.ithome.com,mp.weixin.qq.com,8.8.8.8,m.client.10010.com,*.smzdm.com,
 
 ^https://8.8.8.8/api url script-request-body eval_script.js
 
@@ -25,3 +25,5 @@ https:\/\/ap(p|i)\.bilibili\.com\/((pgc\/player\/api\/playurl)|(x\/v2\/account\/
 ^https?://trade-acs\.m\.taobao\.com/gw/mtop\.taobao\.detail\.getdetail url script-response-body eval_script.js
 
 ^https?://m.client.10010.com/uniAdmsInterface/getHomePageAd url script-response-body eval_script.js
+
+^https?:\/\/homepage-api\.smzdm\.com\/home\?ad url script-response-body eval_script.js
