@@ -1,4 +1,4 @@
-hostname = trade-acs.m.taobao.com,api.m.jd.com,api.ithome.com,mp.weixin.qq.com,8.8.8.8,m.client.10010.com,*.smzdm.com,
+hostname = trade-acs.m.taobao.com,api.m.jd.com,api.ithome.com,mp.weixin.qq.com,8.8.8.8,m.client.10010.com,*.smzdm.com,api.bilibili.com,app.bilibili.com
 
 ^https://8.8.8.8/api url script-request-body eval_script.js
 
