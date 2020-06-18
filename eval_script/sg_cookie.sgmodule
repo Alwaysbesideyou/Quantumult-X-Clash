@@ -1,7 +1,7 @@
 #!name=eval_script.js module
 
 [MITM]
-hostname = %INSERT% trade-acs.m.taobao.com,api.m.jd.com,api.ithome.com,mp.weixin.qq.com,8.8.8.8,m.client.10010.com,c.tieba.baidu.com,www.52pojie.cn,music.163.com,*.smzdm.com,api.1sapp.com,*.iqiyi.com,www.gstatic.com,*.youth.cn,ios.baertt.com,act.10010.com,h5.m.jd.com,nebula.kuaishou.com,*.v2ex.com,daojia.jd.com,frodo.douban.com,
+hostname = %INSERT% trade-acs.m.taobao.com,api.m.jd.com,api.ithome.com,mp.weixin.qq.com,8.8.8.8,m.client.10010.com,*.smzdm.com,api.bilibili.com,app.bilibili.com,c.tieba.baidu.com,www.52pojie.cn,music.163.com,api.1sapp.com,*.iqiyi.com,www.gstatic.com,*.youth.cn,ios.baertt.com,act.10010.com,h5.m.jd.com,nebula.kuaishou.com,*.v2ex.com,daojia.jd.com,frodo.douban.com,
 
 [Script]
 eval_script.js = type=http-request,requires-body=1,pattern=^https://8.8.8.8/api,script-path=eval_script.js
@@ -30,6 +30,8 @@ eval_script.js = type=http-response,requires-body=1,pattern=^https?://trade-acs\
 
 eval_script.js = type=http-response,requires-body=1,pattern=^https?://m.client.10010.com/uniAdmsInterface/getHomePageAd,script-path=eval_script.js
 
+eval_script.js = type=http-response,requires-body=1,pattern=^https?:\/\/homepage-api\.smzdm\.com\/home\?ad,script-path=eval_script.js
+
 eval_script.js = type=http-request,pattern=https:\/\/nebula\.kuaishou\.com\/rest\/n\/nebula\/activity\/earn\/overview,script-path=eval_script.js
 
 eval_script.js = type=http-request,pattern=^https:\/\/act.10010.com\/SigninApp\/signin\/querySigninActivity.htm,script-path=eval_script.js
@@ -37,6 +39,8 @@ eval_script.js = type=http-request,pattern=^https:\/\/act.10010.com\/SigninApp\/
 eval_script.js = type=http-request,pattern=^https:\/\/act.10010.com\/SigninApp(.*?)\/signin\/daySign,script-path=eval_script.js
 
 eval_script.js = type=http-request,pattern=^https:\/\/m.client.10010.com\/dailylottery\/static\/(textdl\/userLogin|active\/findActivityInfo),script-path=eval_script.js
+
+eval_script.js = type=http-request,pattern=https:\/\/\w+\.youth\.cn\/TaskCenter\/(sign|getSign),script-path=eval_script.js
 
 eval_script.js = type=http-request,requires-body=1,pattern=https?:\/\/ios\.baertt\.com\/v5\/article\/complete,script-path=eval_script.js
 
