@@ -1,5 +1,6 @@
 # 在https://raw.githubusercontent.com/primovist/ScriptsForSurge/master/Scripts/Bilibili.js基础上去掉了直播
 
+
 const path1 = "/x/resource/show/tab?access_key";
 const path2 = "/x/v2/feed/index?access_key";
 const path3 = "/x/v2/account/mine?access_key";
