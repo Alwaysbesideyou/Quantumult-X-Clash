@@ -1,5 +1,5 @@
 # 网易新闻
-1 0 * * * https://raw.githubusercontent.com/chavyleung/scripts/master/neteasenews/neteasenews.js
+1 0 * * * https://raw.githubusercontent.com/chavyleung/scripts/master/neteasenews/neteasenews.js, tag=网易新闻, url-img=https://raw.githubusercontent.com/Orz-3/task/master/neteasenews.png, enable=true
 
 
 
