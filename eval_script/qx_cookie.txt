@@ -1,4 +1,4 @@
-hostname = trade-acs.m.taobao.com,api.m.jd.com,api.ithome.com,mp.weixin.qq.com,8.8.8.8,m.client.10010.com,c.tieba.baidu.com,www.52pojie.cn,music.163.com,*.smzdm.com,api.1sapp.com,*.iqiyi.com,www.gstatic.com,*.youth.cn,ios.baertt.com,act.10010.com,h5.m.jd.com,nebula.kuaishou.com,*.v2ex.com,daojia.jd.com,frodo.douban.com,
+hostname = trade-acs.m.taobao.com,api.m.jd.com,api.ithome.com,mp.weixin.qq.com,8.8.8.8,m.client.10010.com,*.smzdm.com,api.bilibili.com,app.bilibili.com,c.tieba.baidu.com,www.52pojie.cn,music.163.com,api.1sapp.com,*.iqiyi.com,www.gstatic.com,*.youth.cn,ios.baertt.com,act.10010.com,h5.m.jd.com,nebula.kuaishou.com,*.v2ex.com,daojia.jd.com,frodo.douban.com,
 
 ^https://8.8.8.8/api url script-request-body eval_script.js
 
@@ -26,6 +26,8 @@ https:\/\/ap(p|i)\.bilibili\.com\/((pgc\/player\/api\/playurl)|(x\/v2\/account\/
 
 ^https?://m.client.10010.com/uniAdmsInterface/getHomePageAd url script-response-body eval_script.js
 
+^https?:\/\/homepage-api\.smzdm\.com\/home\?ad url script-response-body eval_script.js
+
 https:\/\/nebula\.kuaishou\.com\/rest\/n\/nebula\/activity\/earn\/overview url script-request-header eval_script.js
 
 ^https:\/\/act.10010.com\/SigninApp\/signin\/querySigninActivity.htm url script-request-header eval_script.js
@@ -33,6 +35,8 @@ https:\/\/nebula\.kuaishou\.com\/rest\/n\/nebula\/activity\/earn\/overview url s
 ^https:\/\/act.10010.com\/SigninApp(.*?)\/signin\/daySign url script-request-header eval_script.js
 
 ^https:\/\/m.client.10010.com\/dailylottery\/static\/(textdl\/userLogin|active\/findActivityInfo) url script-request-header eval_script.js
+
+https:\/\/\w+\.youth\.cn\/TaskCenter\/(sign|getSign) url script-request-header eval_script.js
 
 https?:\/\/ios\.baertt\.com\/v5\/article\/complete url script-request-body eval_script.js
 
