@@ -1,7 +1,7 @@
 #!name=eval_script.js module
 
 [MITM]
-hostname = %INSERT% trade-acs.m.taobao.com,api.m.jd.com,api.ithome.com,mp.weixin.qq.com,8.8.8.8,m.client.10010.com,*.smzdm.com,api.bilibili.com,app.bilibili.com,c.tieba.baidu.com,www.52pojie.cn,music.163.com,api.1sapp.com,*.iqiyi.com,www.gstatic.com,*.youth.cn,ios.baertt.com,act.10010.com,h5.m.jd.com,nebula.kuaishou.com,*.v2ex.com,daojia.jd.com,frodo.douban.com,
+hostname = %INSERT% trade-acs.m.taobao.com,api.m.jd.com,api.ithome.com,mp.weixin.qq.com,8.8.8.8,m.client.10010.com,*.smzdm.com,api.bilibili.com,app.bilibili.com,c.tieba.baidu.com,www.52pojie.cn,music.163.com,api.1sapp.com,*.iqiyi.com,www.gstatic.com,*.youth.cn,ios.baertt.com,act.10010.com,h5.m.jd.com,nebula.kuaishou.com,*.v2ex.com,daojia.jd.com,frodo.douban.com,*.m.163.com,
 
 [Script]
 eval_script.js = type=http-request,requires-body=1,pattern=^https://8.8.8.8/api,script-path=eval_script.js
@@ -71,3 +71,5 @@ eval_script.js = type=http-request,pattern=^https:\/\/www\.v2ex\.com\/mission\/d
 eval_script.js = type=http-request,pattern=https:\/\/daojia\.jd\.com\/client\?_jdrandom=\d{13}&functionId=%2Fsignin,script-path=eval_script.js
 
 eval_script.js = type=http-request,pattern=^https:\/\/frodo\.douban\.com\/api\/v2\/niffler\/check_in\/status,script-path=eval_script.js
+
+eval_script.js = type=http-request,requires-body=1,pattern=^https:\/\/(.*?)c\.m\.163\.com\/uc\/api\/sign\/v3\/commit,script-path=eval_script.js
