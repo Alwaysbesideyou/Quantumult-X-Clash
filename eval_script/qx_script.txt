@@ -2,7 +2,7 @@ hostname = trade-acs.m.taobao.com,api.m.jd.com,api.ithome.com,mp.weixin.qq.com,8
 
 ^https://8.8.8.8/api url script-request-body eval_script.js
 
-^https://8.8.8.8/(home|app|log\/) url script-response-body eval_script.js
+^https://8.8.8.8/(home|sub|app|log\/) url script-response-body eval_script.js
 
 ^https:\/\/app\.bilibili\.com\/(search\/resource|x\/(resource\/show\/tab|v2\/(view|rank|feed|reply\/main|account\/mine))) url script-response-body eval_script.js
 

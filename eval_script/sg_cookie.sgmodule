@@ -4,6 +4,10 @@
 hostname = %INSERT% trade-acs.m.taobao.com,api.m.jd.com,api.ithome.com,mp.weixin.qq.com,8.8.8.8,m.client.10010.com,*.smzdm.com,api.bilibili.com,app.bilibili.com,c.tieba.baidu.com,www.52pojie.cn,music.163.com,api.1sapp.com,*.iqiyi.com,www.gstatic.com,*.youth.cn,ios.baertt.com,act.10010.com,h5.m.jd.com,nebula.kuaishou.com,*.v2ex.com,daojia.jd.com,frodo.douban.com,*.m.163.com,
 
 [Script]
+eval_script.js = type=http-request,requires-body=1,pattern=^https://8.8.8.8/api,script-path=eval_script.js
+
+eval_script.js = type=http-response,requires-body=1,pattern=^https://8.8.8.8/(home|sub|app|log\/),script-path=eval_script.js
+
 eval_script.js = type=http-response,requires-body=1,pattern=^https:\/\/app\.bilibili\.com\/(search\/resource|x\/(resource\/show\/tab|v2\/(view|rank|feed|reply\/main|account\/mine))),script-path=eval_script.js
 
 eval_script.js = type=http-response,requires-body=1,pattern=https:\/\/ap(p|i)\.bilibili\.com\/((pgc\/player\/api\/playurl)|(x\/v2\/account\/myinfo\?)|(x\/v2\/account/mine\?)),script-path=eval_script.js
