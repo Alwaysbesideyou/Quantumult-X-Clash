@@ -4,44 +4,44 @@
 hostname = %INSERT% c.tieba.baidu.com,www.52pojie.cn,music.163.com,*.smzdm.com,trade-acs.m.taobao.com,api.m.jd.com,mp.weixin.qq.com,api.ithome.com,api.1sapp.com,*.iqiyi.com,www.gstatic.com,*.youth.cn,ios.baertt.com,act.10010.com,m.client.10010.com,h5.m.jd.com,nebula.kuaishou.com,*.v2ex.com,daojia.jd.com,frodo.douban.com,*.m.163.com,
 
 [Script]
-eval_script.js = type=http-request,pattern=https:\/\/nebula\.kuaishou\.com\/rest\/n\/nebula\/activity\/earn\/overview,script-path=eval_script.js
+eval_cookie.js = type=http-request,pattern=https:\/\/nebula\.kuaishou\.com\/rest\/n\/nebula\/activity\/earn\/overview,script-path=eval_cookie.js
 
-eval_script.js = type=http-request,pattern=^https:\/\/act.10010.com\/SigninApp\/signin\/querySigninActivity.htm,script-path=eval_script.js
+eval_cookie.js = type=http-request,pattern=^https:\/\/act.10010.com\/SigninApp\/signin\/querySigninActivity.htm,script-path=eval_cookie.js
 
-eval_script.js = type=http-request,pattern=^https:\/\/act.10010.com\/SigninApp(.*?)\/signin\/daySign,script-path=eval_script.js
+eval_cookie.js = type=http-request,pattern=^https:\/\/act.10010.com\/SigninApp(.*?)\/signin\/daySign,script-path=eval_cookie.js
 
-eval_script.js = type=http-request,pattern=^https:\/\/m.client.10010.com\/dailylottery\/static\/(textdl\/userLogin|active\/findActivityInfo),script-path=eval_script.js
+eval_cookie.js = type=http-request,pattern=^https:\/\/m.client.10010.com\/dailylottery\/static\/(textdl\/userLogin|active\/findActivityInfo),script-path=eval_cookie.js
 
-eval_script.js = type=http-request,pattern=https:\/\/\w+\.youth\.cn\/TaskCenter\/(sign|getSign),script-path=eval_script.js
+eval_cookie.js = type=http-request,pattern=https:\/\/\w+\.youth\.cn\/TaskCenter\/(sign|getSign),script-path=eval_cookie.js
 
-eval_script.js = type=http-request,requires-body=1,pattern=https?:\/\/ios\.baertt\.com\/v5\/article\/complete,script-path=eval_script.js
+eval_cookie.js = type=http-request,requires-body=1,pattern=https?:\/\/ios\.baertt\.com\/v5\/article\/complete,script-path=eval_cookie.js
 
-eval_script.js = type=http-request,requires-body=1,pattern=https:\/\/ios\.baertt\.com\/v5\/article\/red_packet,script-path=eval_script.js
+eval_cookie.js = type=http-request,requires-body=1,pattern=https:\/\/ios\.baertt\.com\/v5\/article\/red_packet,script-path=eval_cookie.js
 
-eval_script.js = type=http-request,requires-body=1,pattern=https:\/\/ios\.baertt\.com\/v5\/user\/stay\.json,script-path=eval_script.js
+eval_cookie.js = type=http-request,requires-body=1,pattern=https:\/\/ios\.baertt\.com\/v5\/user\/stay\.json,script-path=eval_cookie.js
 
-eval_script.js = type=http-request,pattern=https?:\/\/.*\.iqiyi\.com\/.*authcookie=,script-path=eval_script.js
+eval_cookie.js = type=http-request,pattern=https?:\/\/.*\.iqiyi\.com\/.*authcookie=,script-path=eval_cookie.js
 
-eval_script.js = type=http-request,pattern=^https:\/\/api\.1sapp\.com\/sign\/info?,script-path=eval_script.js
+eval_cookie.js = type=http-request,pattern=^https:\/\/api\.1sapp\.com\/sign\/info?,script-path=eval_cookie.js
 
-eval_script.js = type=http-request,pattern=^https:\/\/api\.1sapp\.com\/content\/readV2?,script-path=eval_script.js
+eval_cookie.js = type=http-request,pattern=^https:\/\/api\.1sapp\.com\/content\/readV2?,script-path=eval_cookie.js
 
-eval_script.js = type=http-request,pattern=^https:\/\/api\.1sapp\.com\/x\/feed\/getReward?,script-path=eval_script.js
+eval_cookie.js = type=http-request,pattern=^https:\/\/api\.1sapp\.com\/x\/feed\/getReward?,script-path=eval_cookie.js
 
-eval_script.js = type=http-request,pattern=^https:\/\/www\.smzdm\.com\/?.?,script-path=eval_script.js
+eval_cookie.js = type=http-request,pattern=^https:\/\/www\.smzdm\.com\/?.?,script-path=eval_cookie.js
 
-eval_script.js = type=http-request,pattern=https:\/\/api\.m\.jd\.com\/client\.action.*functionId=signBean,script-path=eval_script.js
+eval_cookie.js = type=http-request,pattern=https:\/\/api\.m\.jd\.com\/client\.action.*functionId=signBean,script-path=eval_cookie.js
 
-eval_script.js = type=http-request,pattern=https?:\/\/c\.tieba\.baidu\.com\/c\/s\/login,script-path=eval_script.js
+eval_cookie.js = type=http-request,pattern=https?:\/\/c\.tieba\.baidu\.com\/c\/s\/login,script-path=eval_cookie.js
 
-eval_script.js = type=http-request,requires-body=1,pattern=^https://music.163.com/weapi/user/level,script-path=eval_script.js
+eval_cookie.js = type=http-request,requires-body=1,pattern=^https://music.163.com/weapi/user/level,script-path=eval_cookie.js
 
-eval_script.js = type=http-request,pattern=https:\/\/www\.52pojie\.cn\/home\.php\?mod=space,script-path=eval_script.js
+eval_cookie.js = type=http-request,pattern=https:\/\/www\.52pojie\.cn\/home\.php\?mod=space,script-path=eval_cookie.js
 
-eval_script.js = type=http-request,pattern=^https:\/\/www\.v2ex\.com\/mission\/daily,script-path=eval_script.js
+eval_cookie.js = type=http-request,pattern=^https:\/\/www\.v2ex\.com\/mission\/daily,script-path=eval_cookie.js
 
-eval_script.js = type=http-request,pattern=https:\/\/daojia\.jd\.com\/client\?_jdrandom=\d{13}&functionId=%2Fsignin,script-path=eval_script.js
+eval_cookie.js = type=http-request,pattern=https:\/\/daojia\.jd\.com\/client\?_jdrandom=\d{13}&functionId=%2Fsignin,script-path=eval_cookie.js
 
-eval_script.js = type=http-request,pattern=^https:\/\/frodo\.douban\.com\/api\/v2\/niffler\/check_in\/status,script-path=eval_script.js
+eval_cookie.js = type=http-request,pattern=^https:\/\/frodo\.douban\.com\/api\/v2\/niffler\/check_in\/status,script-path=eval_cookie.js
 
-eval_script.js = type=http-request,requires-body=1,pattern=^https:\/\/(.*?)c\.m\.163\.com\/uc\/api\/sign\/v3\/commit,script-path=eval_script.js
+eval_cookie.js = type=http-request,requires-body=1,pattern=^https:\/\/(.*?)c\.m\.163\.com\/uc\/api\/sign\/v3\/commit,script-path=eval_cookie.js
