@@ -1,33 +1,9 @@
 #!name=eval_script.js module
 
 [MITM]
-hostname = %INSERT% trade-acs.m.taobao.com,api.m.jd.com,api.ithome.com,mp.weixin.qq.com,8.8.8.8,m.client.10010.com,*.smzdm.com,api.bilibili.com,app.bilibili.com,c.tieba.baidu.com,www.52pojie.cn,music.163.com,api.1sapp.com,*.iqiyi.com,www.gstatic.com,*.youth.cn,ios.baertt.com,act.10010.com,h5.m.jd.com,nebula.kuaishou.com,*.v2ex.com,daojia.jd.com,frodo.douban.com,*.m.163.com,
+hostname = %INSERT% c.tieba.baidu.com,www.52pojie.cn,music.163.com,*.smzdm.com,trade-acs.m.taobao.com,api.m.jd.com,mp.weixin.qq.com,api.ithome.com,api.1sapp.com,*.iqiyi.com,www.gstatic.com,*.youth.cn,ios.baertt.com,act.10010.com,m.client.10010.com,h5.m.jd.com,nebula.kuaishou.com,*.v2ex.com,daojia.jd.com,frodo.douban.com,*.m.163.com,
 
 [Script]
-eval_script.js = type=http-response,requires-body=1,pattern=^https:\/\/app\.bilibili\.com\/(search\/resource|x\/(resource\/show\/tab|v2\/(view|rank|feed|reply\/main|account\/mine))),script-path=eval_script.js
-
-eval_script.js = type=http-response,requires-body=1,pattern=https:\/\/ap(p|i)\.bilibili\.com\/((pgc\/player\/api\/playurl)|(x\/v2\/account\/myinfo\?)|(x\/v2\/account/mine\?)),script-path=eval_script.js
-
-eval_script.js = type=http-response,requires-body=1,pattern=^https:\/\/app\.bilibili\.com\/x\/v2\/space\?access_key,script-path=eval_script.js
-
-eval_script.js = type=http-response,requires-body=1,pattern=^https?:\/\/mp\.weixin\.qq\.com\/mp\/getappmsgad,script-path=eval_script.js
-
-eval_script.js = type=http-response,requires-body=1,pattern=^https?:\/\/api\.ithome\.com\/json\/slide\/index,script-path=eval_script.js
-
-eval_script.js = type=http-response,requires-body=1,pattern=^https?:\/\/api\.ithome\.com\/json\/newslist\/new,script-path=eval_script.js
-
-eval_script.js = type=http-response,requires-body=1,pattern=^https?:\/\/api\.ithome\.com\/json\/listpage\/news.*,script-path=eval_script.js
-
-eval_script.js = type=http-response,requires-body=1,pattern=^https?://api\.m\.jd\.com/client\.action\?functionId=(wareBusiness|serverConfig),script-path=eval_script.js
-
-eval_script.js = type=http-response,requires-body=1,pattern=^http://.+/amdc/mobileDispatch,script-path=eval_script.js
-
-eval_script.js = type=http-response,requires-body=1,pattern=^https?://trade-acs\.m\.taobao\.com/gw/mtop\.taobao\.detail\.getdetail,script-path=eval_script.js
-
-eval_script.js = type=http-response,requires-body=1,pattern=^https?://m.client.10010.com/uniAdmsInterface/getHomePageAd,script-path=eval_script.js
-
-eval_script.js = type=http-response,requires-body=1,pattern=^https?:\/\/homepage-api\.smzdm\.com\/home\?ad,script-path=eval_script.js
-
 eval_script.js = type=http-request,pattern=https:\/\/nebula\.kuaishou\.com\/rest\/n\/nebula\/activity\/earn\/overview,script-path=eval_script.js
 
 eval_script.js = type=http-request,pattern=^https:\/\/act.10010.com\/SigninApp\/signin\/querySigninActivity.htm,script-path=eval_script.js
