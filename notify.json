@@ -1,0 +1,21 @@
+{
+	"id": "always",
+	"name": "always",
+	"author": "@alwaysbesideyou",
+	"icon": "",
+	"repo": "https://github.com/songyangzz/QuantumultX",
+	"apps": [
+		{
+			"id": "qxnotify",
+			"name": "qx推送",
+			"keys": [
+				"magicjs_unified_push_url"
+			],
+			"author": "",
+			"repo": "",
+			"icons": [
+				"https://raw.githubusercontent.com/Orz-3/mini/master/elem.png"
+			]
+		}
+		]
+}
