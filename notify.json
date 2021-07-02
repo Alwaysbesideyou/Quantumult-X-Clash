@@ -11,7 +11,19 @@
 			"keys": [
 				"magicjs_unified_push_url"
 			],
-			"author": "",
+		        "settings": [
+                                {
+                                   "id": "magicjs_unified_push_url",
+                                   "name": "Bark's url",
+                                   "val": "",
+                                   "type": "textarea",
+                                   "placeholder": "token",
+                                   "autoGrow": true,
+                                   "rows": 3,
+                                   "desc": ""
+                                }
+			],
+			"author": "@Alwaysbesideyou",
 			"repo": "",
 			"icons": [
 				"https://raw.githubusercontent.com/Orz-3/mini/master/elem.png"
