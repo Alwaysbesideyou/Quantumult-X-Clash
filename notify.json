@@ -1,9 +1,9 @@
 {
 	"id": "always",
-	"name": "always",
-	"author": "@alwaysbesideyou",
+	"name": "QX推送到BARK",
+	"author": "@blackmatrix7",
 	"icon": "",
-	"repo": "https://github.com/songyangzz/QuantumultX",
+	"repo": "https://github.com/blackmatrix7/ios_rule_script",
 	"apps": [
 		{
 			"id": "qxnotify",
@@ -24,7 +24,7 @@
                                 }
 			],
 			"author": "@Alwaysbesideyou",
-			"repo": "",
+			"repo": "https://github.com/Alwaysbesideyou",
 			"icons": [
 				"https://raw.githubusercontent.com/Orz-3/mini/master/elem.png"
 			]
