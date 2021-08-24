@@ -1,4 +1,4 @@
-# Always
+# Quantumult X & Clash
 
 自用Quantumult X 规则
 
