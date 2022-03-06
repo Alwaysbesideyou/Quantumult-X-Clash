@@ -2030,7 +2030,7 @@ function buildLastDesp(desp, author = '') {
         if (!author.match(/本通知 By/)) {
             author = `\n${author}`
         }
-        return desp.trim() + "\n\n通知时间: " + GetDateTime(new Date()) + author;
+        return desp.trim() + "\n\n👾 " + GetDateTime(new Date()) + " 👾" + author;
     }
 }
 
