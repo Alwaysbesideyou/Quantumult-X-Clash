@@ -2,7 +2,7 @@
   "id": "always",
   "name": "BOXJSforSUDIE",
   "author": "@Alwaysbesideyou",
-  "icon": "",
+  "icon": "https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/master/Maria.png",
   "repo": "https://github.com/Alwaysbesideyou",
   "apps": [
     {
@@ -26,7 +26,7 @@
       "author": "@Alwaysbesideyou",
       "repo": "https://github.com/Alwaysbesideyou",
       "icons": [
-        "https://raw.githubusercontent.com/Orz-3/mini/master/elem.png"
+        "https://raw.githubusercontent.com/crossutility/Quantumult-X/master/quantumult-x.png"
       ]
     },
     {
@@ -51,7 +51,7 @@
         "@xream.sms_forward-sudie.bark",
         "@Alwaysbesideyou.sms_forward-sudie.TGBOT"
       ],
-      "author": "@@Alwaysbesideyou",
+      "author": "@Alwaysbesideyou",
       "repo": "https://github.com/Alwaysbesideyou",
       "settings": [
         {
@@ -147,8 +147,8 @@
         }
       ],
       "icons": [
-        "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/sms-forward/asset/1.png",
-        "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/sms-forward/asset/1.png"
+        "https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/master/sms-forward/sms-forward.png",
+        "https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/master/sms-forward/sms-forward.png"
       ]
     },
     {
@@ -173,7 +173,7 @@
         "@xream.sms_forward.bark",
         "@Alwaysbesideyou.sms_forward.TGBOT"
       ],
-      "author": "@@Alwaysbesideyou",
+      "author": "@Alwaysbesideyou",
       "repo": "https://github.com/Alwaysbesideyou",
       "settings": [
         {
@@ -269,8 +269,8 @@
         }
       ],
       "icons": [
-        "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/sms-forward/asset/1.png",
-        "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/sms-forward/asset/1.png"
+        "https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/master/sms-forward/sms-forward.png",
+        "https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/master/sms-forward/sms-forward.png"
       ]
     },
     {
@@ -295,7 +295,7 @@
         "@xream.sms_forward-1.bark",
         "@Alwaysbesideyou.sms_forward-1.TGBOT"
       ],
-      "author": "@@Alwaysbesideyou",
+      "author": "@Alwaysbesideyou",
       "repo": "https://github.com/Alwaysbesideyou",
       "settings": [
         {
@@ -391,8 +391,8 @@
         }
       ],
       "icons": [
-        "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/sms-forward/asset/1.png",
-        "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/sms-forward/asset/1.png"
+        "https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/master/sms-forward/sms-forward.png",
+        "https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/master/sms-forward/sms-forward.png"
       ]
     },
     {
@@ -432,20 +432,20 @@
         "@xream.10010.detail",
         "@xream.10010.detailText"
       ],
-      "author": "@xream",
-      "repo": "https://github.com/xream/scripts/tree/main/surge/modules/10010v3",
+      "author": "@Alwaysbesideyou",
+      "repo": "https://github.com/Alwaysbesideyou/Quantumult-X-Clash/blob/master/10010",
       "scripts": [
         {
           "name": "发送验证码(填手机号,保存,再执行)",
-          "script": "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010v3/10010_send_sms.js"
+          "script": "https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/master/10010/10010_send_sms.js"
         },
         {
           "name": "用验证码登录(填手机号,验证码,保存,再执行)",
-          "script": "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010v3/10010_sms_sign.js"
+          "script": "https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/master/10010/10010_sms_sign.js"
         },
         {
           "name": "手动执行",
-          "script": "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010v3/10010.js"
+          "script": "https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/master/10010/10010.js"
         }
       ],
       "settings": [
@@ -618,8 +618,8 @@
         }
       ],
       "icons": [
-        "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010v3/assets/icon.png",
-        "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010v3/assets/icon.png"
+        "https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/master/10010/icon.png",
+        "https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/master/10010/icon.png"
       ]
     }
   ]
