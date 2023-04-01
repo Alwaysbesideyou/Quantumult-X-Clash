@@ -127,11 +127,25 @@
           "desc": "默认: [内容], 例: 您的验证码为 123456"
         },
         {
+          "id": "@Alwaysbesideyou.sms_forward.TGBOT",
+          "name": "转发到 TGBOT",
+          "val": "",
+          "type": "textarea",
+          "desc": "[推送标题], [推送内容], [复制内容] 会被自动替换. 形如 https://api.day.app/XXXXXXXXX/[推送标题]/[推送内容]?group=sms&autoCopy=1&isArchive=1&icon=https%3A%2F%2Fraw.githubusercontent.com%2Fxream%2Fscripts%2Fmain%2Fsurge%2Fmodules%2Fsms-forward%2Fasset%2F1.png&copy=[复制内容]"
+        },
+        {
           "id": "@Alwaysbesideyou.sms_forward.bark",
           "name": "转发到 Bark/自建服务端 等",
           "val": "",
           "type": "textarea",
           "desc": "[推送标题], [推送内容], [复制内容] 会被自动替换. 形如 https://api.day.app/XXXXXXXXX/[推送标题]/[推送内容]?group=sms&autoCopy=1&isArchive=1&icon=https%3A%2F%2Fraw.githubusercontent.com%2Fxream%2Fscripts%2Fmain%2Fsurge%2Fmodules%2Fsms-forward%2Fasset%2F1.png&copy=[复制内容]"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward.smartReminderTitle",
+          "name": "Bark 转发到 smartReminder",
+          "val": "",
+          "type": "textarea",
+          "desc": "Smart Reminder 标题"
         },
         {
           "id": "@Alwaysbesideyou.sms_forward.pushdeer",
@@ -146,20 +160,6 @@
           "val": "",
           "type": "textarea",
           "desc": "默认只取 sms_forward 的配置. 设置为 sms_forward-1, sms_forward-2 后, 将同时处理这三个配置"
-        },
-        {
-          "id": "@Alwaysbesideyou.sms_forward.TGBOT",
-          "name": "转发到 TGBOT",
-          "val": "",
-          "type": "textarea",
-          "desc": "[推送标题], [推送内容], [复制内容] 会被自动替换. 形如 https://api.day.app/XXXXXXXXX/[推送标题]/[推送内容]?group=sms&autoCopy=1&isArchive=1&icon=https%3A%2F%2Fraw.githubusercontent.com%2Fxream%2Fscripts%2Fmain%2Fsurge%2Fmodules%2Fsms-forward%2Fasset%2F1.png&copy=[复制内容]"
-        },
-        {
-          "id": "@Alwaysbesideyou.sms_forward.smartReminderTitle",
-          "name": "Bark 转发到 smartReminder",
-          "val": "",
-          "type": "textarea",
-          "desc": "Smart Reminder 标题"
         }
       ],
       "icons": [
@@ -264,22 +264,15 @@
           "desc": "默认: [内容], 例: 您的验证码为 123456"
         },
         {
-          "id": "@Alwaysbesideyou.sms_forward-0.bark",
-          "name": "转发到 Bark/自建服务端 等",
+          "id": "@Alwaysbesideyou.sms_forward-0.TGBOT",
+          "name": "转发到 TGBOT",
           "val": "",
           "type": "textarea",
           "desc": "[推送标题], [推送内容], [复制内容] 会被自动替换. 形如 https://api.day.app/XXXXXXXXX/[推送标题]/[推送内容]?group=sms&autoCopy=1&isArchive=1&icon=https%3A%2F%2Fraw.githubusercontent.com%2Fxream%2Fscripts%2Fmain%2Fsurge%2Fmodules%2Fsms-forward%2Fasset%2F1.png&copy=[复制内容]"
         },
         {
-          "id": "@Alwaysbesideyou.sms_forward-0.pushdeer",
-          "name": "转发到 PushDeer/PushPlus 等",
-          "val": "",
-          "type": "textarea",
-          "desc": "[推送全文] 会被自动替换. 形如 https://api2.pushdeer.com/message/push?pushkey=XXXXXXXXXXX&text=[推送全文]"
-        },
-        {
-          "id": "@Alwaysbesideyou.sms_forward-0.TGBOT",
-          "name": "转发到 TGBOT",
+          "id": "@Alwaysbesideyou.sms_forward-0.bark",
+          "name": "转发到 Bark/自建服务端 等",
           "val": "",
           "type": "textarea",
           "desc": "[推送标题], [推送内容], [复制内容] 会被自动替换. 形如 https://api.day.app/XXXXXXXXX/[推送标题]/[推送内容]?group=sms&autoCopy=1&isArchive=1&icon=https%3A%2F%2Fraw.githubusercontent.com%2Fxream%2Fscripts%2Fmain%2Fsurge%2Fmodules%2Fsms-forward%2Fasset%2F1.png&copy=[复制内容]"
@@ -290,6 +283,13 @@
           "val": "",
           "type": "textarea",
           "desc": "Smart Reminder 标题"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward-0.pushdeer",
+          "name": "转发到 PushDeer/PushPlus 等",
+          "val": "",
+          "type": "textarea",
+          "desc": "[推送全文] 会被自动替换. 形如 https://api2.pushdeer.com/message/push?pushkey=XXXXXXXXXXX&text=[推送全文]"
         }
       ],
       "icons": [
@@ -394,22 +394,15 @@
           "desc": "默认: [内容], 例: 您的验证码为 123456"
         },
         {
-          "id": "@Alwaysbesideyou.sms_forward-1.bark",
-          "name": "转发到 Bark/自建服务端 等",
+          "id": "@Alwaysbesideyou.sms_forward-1.TGBOT",
+          "name": "转发到 TGBOT",
           "val": "",
           "type": "textarea",
           "desc": "[推送标题], [推送内容], [复制内容] 会被自动替换. 形如 https://api.day.app/XXXXXXXXX/[推送标题]/[推送内容]?group=sms&autoCopy=1&isArchive=1&icon=https%3A%2F%2Fraw.githubusercontent.com%2Fxream%2Fscripts%2Fmain%2Fsurge%2Fmodules%2Fsms-forward%2Fasset%2F1.png&copy=[复制内容]"
         },
         {
-          "id": "@Alwaysbesideyou.sms_forward-1.pushdeer",
-          "name": "转发到 PushDeer/PushPlus 等",
-          "val": "",
-          "type": "textarea",
-          "desc": "[推送全文] 会被自动替换. 形如 https://api2.pushdeer.com/message/push?pushkey=XXXXXXXXXXX&text=[推送全文]"
-        },
-        {
-          "id": "@Alwaysbesideyou.sms_forward-1.TGBOT",
-          "name": "转发到 TGBOT",
+          "id": "@Alwaysbesideyou.sms_forward-1.bark",
+          "name": "转发到 Bark/自建服务端 等",
           "val": "",
           "type": "textarea",
           "desc": "[推送标题], [推送内容], [复制内容] 会被自动替换. 形如 https://api.day.app/XXXXXXXXX/[推送标题]/[推送内容]?group=sms&autoCopy=1&isArchive=1&icon=https%3A%2F%2Fraw.githubusercontent.com%2Fxream%2Fscripts%2Fmain%2Fsurge%2Fmodules%2Fsms-forward%2Fasset%2F1.png&copy=[复制内容]"
@@ -420,6 +413,13 @@
           "val": "",
           "type": "textarea",
           "desc": "Smart Reminder 标题"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward-1.pushdeer",
+          "name": "转发到 PushDeer/PushPlus 等",
+          "val": "",
+          "type": "textarea",
+          "desc": "[推送全文] 会被自动替换. 形如 https://api2.pushdeer.com/message/push?pushkey=XXXXXXXXXXX&text=[推送全文]"
         }
       ],
       "icons": [
