@@ -30,156 +30,26 @@
       ]
     },
     {
-      "id": "xream.sms_forward-sudie",
-      "name": "短信转发-sudie",
-      "descs_html": [
-        "<a href=\"https://github.com/xream/scripts/tree/main/surge/modules/sms-forward\">查看文档</a>",
-        "<a onClick=\"window.location.reload(true);\">刷新</a>"
-      ],
-      "keys": [
-        "@xream.sms_forward-sudie.disabled",
-        "@xream.sms_forward-sudie.sender_allow",
-        "@xream.sms_forward-sudie.sender_deny",
-        "@xream.sms_forward-sudie.text_allow",
-        "@xream.sms_forward-sudie.text_deny",
-        "@xream.sms_forward-sudie.code_test",
-        "@xream.sms_forward-sudie.code_get",
-        "@xream.sms_forward-sudie.title",
-        "@xream.sms_forward-sudie.subtitle",
-        "@xream.sms_forward-sudie.body",
-        "@xream.sms_forward-sudie.pushdeer",
-        "@xream.sms_forward-sudie.bark",
-        "@Alwaysbesideyou.sms_forward-sudie.TGBOT",
-        "@Alwaysbesideyou.sms_forward-sudie.smartReminderTitle"
-      ],
-      "author": "@Alwaysbesideyou",
-      "repo": "https://github.com/Alwaysbesideyou",
-      "settings": [
-        {
-          "id": "@xream.sms_forward-sudie.disabled",
-          "name": "禁用",
-          "val": false,
-          "type": "boolean",
-          "desc": "默认启用"
-        },
-        {
-          "id": "@xream.sms_forward-sudie.sender_allow",
-          "name": "允许转发的号码的正则字符串",
-          "val": "",
-          "type": "textarea",
-          "desc": "符合的号码才会转发 例: (18600000000|18611111111) 表示只转发这两个号码. ^186 表示只转发186开头的号码. ^\\d{11}$ 表示只转发11位的号码. 默认为空 允许转发所有号码"
-        },
-        {
-          "id": "@xream.sms_forward-sudie.sender_deny",
-          "name": "不允许转发的号码的正则字符串",
-          "val": "",
-          "type": "textarea",
-          "desc": "符合的号码不会转发 其他的号码都会转发"
-        },
-        {
-          "id": "@xream.sms_forward-sudie.text_allow",
-          "name": "允许转发的内容的正则字符串",
-          "val": "",
-          "type": "textarea",
-          "desc": "符合的内容才会转发 例: (码|快递) 表示只允许这包含这俩词的内容. 默认为空 允许转发所有内容"
-        },
-        {
-          "id": "@xream.sms_forward-sudie.text_deny",
-          "name": "不允许转发的内容的正则字符串",
-          "val": "",
-          "type": "textarea",
-          "desc": "符合的内容不会转发 其他的内容都会转发"
-        },
-        {
-          "id": "@xream.sms_forward-sudie.code_test",
-          "name": "判断内容是否包含验证码的正则字符串",
-          "val": "",
-          "type": "textarea",
-          "desc": "验证码提取逻辑没有很好的思路 现在需要先判断该内容是否有验证码 再提取验证码. 默认为 .+(码) 表示内容符合 'X码' 这样的格式"
-        },
-        {
-          "id": "@xream.sms_forward-sudie.code_get",
-          "name": "从内容提取验证码的正则字符串",
-          "val": "",
-          "type": "textarea",
-          "desc": "提取的验证码将作为可复制的内容 方便 Bark 复制. 默认为 \\d{4,6} 表示提取4-6位的数字"
-        },
-        {
-          "id": "@xream.sms_forward-sudie.title",
-          "name": "通知标题模板",
-          "val": "",
-          "type": "text",
-          "desc": "默认: [号码], 例: 10010"
-        },
-        {
-          "id": "@xream.sms_forward-sudie.subtitle",
-          "name": "通知副标题模板",
-          "val": "",
-          "type": "text",
-          "desc": "默认: [码][复制提示], 例: 123456(长按/下拉复制验证码)"
-        },
-        {
-          "id": "@xream.sms_forward-sudie.body",
-          "name": "通知正文模板",
-          "val": "",
-          "type": "textarea",
-          "desc": "默认: [内容], 例: 您的验证码为 123456"
-        },
-        {
-          "id": "@xream.sms_forward-sudie.bark",
-          "name": "转发到 Bark/自建服务端 等",
-          "val": "",
-          "type": "textarea",
-          "desc": "[推送标题], [推送内容], [复制内容] 会被自动替换. 形如 https://api.day.app/XXXXXXXXX/[推送标题]/[推送内容]?group=sms&autoCopy=1&isArchive=1&icon=https%3A%2F%2Fraw.githubusercontent.com%2Fxream%2Fscripts%2Fmain%2Fsurge%2Fmodules%2Fsms-forward%2Fasset%2F1.png&copy=[复制内容]"
-        },
-        {
-          "id": "@xream.sms_forward-sudie.pushdeer",
-          "name": "转发到 PushDeer/PushPlus 等",
-          "val": "",
-          "type": "textarea",
-          "desc": "[推送全文] 会被自动替换. 形如 https://api2.pushdeer.com/message/push?pushkey=XXXXXXXXXXX&text=[推送全文]"
-        },
-        {
-          "id": "@Alwaysbesideyou.sms_forward-sudie.TGBOT",
-          "name": "转发到 TGBOT",
-          "val": "",
-          "type": "textarea",
-          "desc": "[推送标题], [推送内容], [复制内容] 会被自动替换. 形如 https://api.day.app/XXXXXXXXX/[推送标题]/[推送内容]?group=sms&autoCopy=1&isArchive=1&icon=https%3A%2F%2Fraw.githubusercontent.com%2Fxream%2Fscripts%2Fmain%2Fsurge%2Fmodules%2Fsms-forward%2Fasset%2F1.png&copy=[复制内容]"
-        },
-        {
-          "id": "@Alwaysbesideyou.sms_forward-sudie.smartReminderTitle",
-          "name": "Bark 转发到 smartReminder",
-          "val": "",
-          "type": "textarea",
-          "desc": "Smart Reminder 标题"
-        }
-      ],
-      "icons": [
-        "https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/master/sms-forward/sms-forward.png",
-        "https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/master/sms-forward/sms-forward.png"
-      ]
-    },
-    {
-      "id": "xream.sms_forward",
+      "id": "Alwaysbesideyou.sms_forward",
       "name": "短信转发",
       "descs_html": [
-        "<a href=\"https://github.com/xream/scripts/tree/main/surge/modules/sms-forward\">查看文档</a>",
+        "<a href=\"https://github.com/Alwaysbesideyou/Quantumult-X-Clash/tree/master/sms-forward\">查看文档</a>",
         "<a onClick=\"window.location.reload(true);\">刷新</a>"
       ],
       "keys": [
-        "@xream.sms_forward.disabled",
-        "@xream.sms_forward.sender_allow",
-        "@xream.sms_forward.sender_deny",
-        "@xream.sms_forward.text_allow",
-        "@xream.sms_forward.text_deny",
-        "@xream.sms_forward.code_test",
-        "@xream.sms_forward.code_get",
-        "@xream.sms_forward.title",
-        "@xream.sms_forward.subtitle",
-        "@xream.sms_forward.body",
-        "@xream.sms_forward.pushdeer",
-        "@xream.sms_forward.bark",
-        "@xream.sms_forward.keys",
+        "@Alwaysbesideyou.sms_forward.disabled",
+        "@Alwaysbesideyou.sms_forward.sender_allow",
+        "@Alwaysbesideyou.sms_forward.sender_deny",
+        "@Alwaysbesideyou.sms_forward.text_allow",
+        "@Alwaysbesideyou.sms_forward.text_deny",
+        "@Alwaysbesideyou.sms_forward.code_test",
+        "@Alwaysbesideyou.sms_forward.code_get",
+        "@Alwaysbesideyou.sms_forward.title",
+        "@Alwaysbesideyou.sms_forward.subtitle",
+        "@Alwaysbesideyou.sms_forward.body",
+        "@Alwaysbesideyou.sms_forward.pushdeer",
+        "@Alwaysbesideyou.sms_forward.bark",
+        "@Alwaysbesideyou.sms_forward.keys",
         "@Alwaysbesideyou.sms_forward.TGBOT",
         "@Alwaysbesideyou.sms_forward.smartReminderTitle"
       ],
@@ -187,91 +57,91 @@
       "repo": "https://github.com/Alwaysbesideyou",
       "settings": [
         {
-          "id": "@xream.sms_forward.disabled",
+          "id": "@Alwaysbesideyou.sms_forward.disabled",
           "name": "禁用",
           "val": false,
           "type": "boolean",
           "desc": "默认启用"
         },
         {
-          "id": "@xream.sms_forward.sender_allow",
+          "id": "@Alwaysbesideyou.sms_forward.sender_allow",
           "name": "允许转发的号码的正则字符串",
           "val": "",
           "type": "textarea",
           "desc": "符合的号码才会转发 例: (18600000000|18611111111) 表示只转发这两个号码. ^186 表示只转发186开头的号码. ^\\d{11}$ 表示只转发11位的号码. 默认为空 允许转发所有号码"
         },
         {
-          "id": "@xream.sms_forward.sender_deny",
+          "id": "@Alwaysbesideyou.sms_forward.sender_deny",
           "name": "不允许转发的号码的正则字符串",
           "val": "",
           "type": "textarea",
           "desc": "符合的号码不会转发 其他的号码都会转发"
         },
         {
-          "id": "@xream.sms_forward.text_allow",
+          "id": "@Alwaysbesideyou.sms_forward.text_allow",
           "name": "允许转发的内容的正则字符串",
           "val": "",
           "type": "textarea",
           "desc": "符合的内容才会转发 例: (码|快递) 表示只允许这包含这俩词的内容. 默认为空 允许转发所有内容"
         },
         {
-          "id": "@xream.sms_forward.text_deny",
+          "id": "@Alwaysbesideyou.sms_forward.text_deny",
           "name": "不允许转发的内容的正则字符串",
           "val": "",
           "type": "textarea",
           "desc": "符合的内容不会转发 其他的内容都会转发"
         },
         {
-          "id": "@xream.sms_forward.code_test",
+          "id": "@Alwaysbesideyou.sms_forward.code_test",
           "name": "判断内容是否包含验证码的正则字符串",
           "val": "",
           "type": "textarea",
           "desc": "验证码提取逻辑没有很好的思路 现在需要先判断该内容是否有验证码 再提取验证码. 默认为 .+(码) 表示内容符合 'X码' 这样的格式"
         },
         {
-          "id": "@xream.sms_forward.code_get",
+          "id": "@Alwaysbesideyou.sms_forward.code_get",
           "name": "从内容提取验证码的正则字符串",
           "val": "",
           "type": "textarea",
           "desc": "提取的验证码将作为可复制的内容 方便 Bark 复制. 默认为 \\d{4,6} 表示提取4-6位的数字"
         },
         {
-          "id": "@xream.sms_forward.title",
+          "id": "@Alwaysbesideyou.sms_forward.title",
           "name": "通知标题模板",
           "val": "",
           "type": "text",
           "desc": "默认: [号码], 例: 10010"
         },
         {
-          "id": "@xream.sms_forward.subtitle",
+          "id": "@Alwaysbesideyou.sms_forward.subtitle",
           "name": "通知副标题模板",
           "val": "",
           "type": "text",
           "desc": "默认: [码][复制提示], 例: 123456(长按/下拉复制验证码)"
         },
         {
-          "id": "@xream.sms_forward.body",
+          "id": "@Alwaysbesideyou.sms_forward.body",
           "name": "通知正文模板",
           "val": "",
           "type": "textarea",
           "desc": "默认: [内容], 例: 您的验证码为 123456"
         },
         {
-          "id": "@xream.sms_forward.bark",
+          "id": "@Alwaysbesideyou.sms_forward.bark",
           "name": "转发到 Bark/自建服务端 等",
           "val": "",
           "type": "textarea",
           "desc": "[推送标题], [推送内容], [复制内容] 会被自动替换. 形如 https://api.day.app/XXXXXXXXX/[推送标题]/[推送内容]?group=sms&autoCopy=1&isArchive=1&icon=https%3A%2F%2Fraw.githubusercontent.com%2Fxream%2Fscripts%2Fmain%2Fsurge%2Fmodules%2Fsms-forward%2Fasset%2F1.png&copy=[复制内容]"
         },
         {
-          "id": "@xream.sms_forward.pushdeer",
+          "id": "@Alwaysbesideyou.sms_forward.pushdeer",
           "name": "转发到 PushDeer/PushPlus 等",
           "val": "",
           "type": "textarea",
           "desc": "[推送全文] 会被自动替换. 形如 https://api2.pushdeer.com/message/push?pushkey=XXXXXXXXXXX&text=[推送全文]"
         },
         {
-          "id": "@xream.sms_forward.keys",
+          "id": "@Alwaysbesideyou.sms_forward.keys",
           "name": "其他配置的 key(英文逗号,分隔)",
           "val": "",
           "type": "textarea",
@@ -298,25 +168,155 @@
       ]
     },
     {
-      "id": "xream.sms_forward-1",
-      "name": "短信转发-1",
+      "id": "Alwaysbesideyou.sms_forward-0",
+      "name": "短信转发-0",
       "descs_html": [
-        "<a href=\"https://github.com/xream/scripts/tree/main/surge/modules/sms-forward\">查看文档</a>",
+        "<a href=\"https://github.com/Alwaysbesideyou/Quantumult-X-Clash/tree/master/sms-forward\">查看文档</a>",
         "<a onClick=\"window.location.reload(true);\">刷新</a>"
       ],
       "keys": [
-        "@xream.sms_forward-1.disabled",
-        "@xream.sms_forward-1.sender_allow",
-        "@xream.sms_forward-1.sender_deny",
-        "@xream.sms_forward-1.text_allow",
-        "@xream.sms_forward-1.text_deny",
-        "@xream.sms_forward-1.code_test",
-        "@xream.sms_forward-1.code_get",
-        "@xream.sms_forward-1.title",
-        "@xream.sms_forward-1.subtitle",
-        "@xream.sms_forward-1.body",
-        "@xream.sms_forward-1.pushdeer",
-        "@xream.sms_forward-1.bark",
+        "@Alwaysbesideyou.sms_forward-0.disabled",
+        "@Alwaysbesideyou.sms_forward-0.sender_allow",
+        "@Alwaysbesideyou.sms_forward-0.sender_deny",
+        "@Alwaysbesideyou.sms_forward-0.text_allow",
+        "@Alwaysbesideyou.sms_forward-0.text_deny",
+        "@Alwaysbesideyou.sms_forward-0.code_test",
+        "@Alwaysbesideyou.sms_forward-0.code_get",
+        "@Alwaysbesideyou.sms_forward-0.title",
+        "@Alwaysbesideyou.sms_forward-0.subtitle",
+        "@Alwaysbesideyou.sms_forward-0.body",
+        "@Alwaysbesideyou.sms_forward-0.pushdeer",
+        "@Alwaysbesideyou.sms_forward-0.bark",
+        "@Alwaysbesideyou.sms_forward-0.TGBOT",
+        "@Alwaysbesideyou.sms_forward-0.smartReminderTitle"
+      ],
+      "author": "@Alwaysbesideyou",
+      "repo": "https://github.com/Alwaysbesideyou",
+      "settings": [
+        {
+          "id": "@Alwaysbesideyou.sms_forward-0.disabled",
+          "name": "禁用",
+          "val": false,
+          "type": "boolean",
+          "desc": "默认启用"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward-0.sender_allow",
+          "name": "允许转发的号码的正则字符串",
+          "val": "",
+          "type": "textarea",
+          "desc": "符合的号码才会转发 例: (18600000000|18611111111) 表示只转发这两个号码. ^186 表示只转发186开头的号码. ^\\d{11}$ 表示只转发11位的号码. 默认为空 允许转发所有号码"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward-0.sender_deny",
+          "name": "不允许转发的号码的正则字符串",
+          "val": "",
+          "type": "textarea",
+          "desc": "符合的号码不会转发 其他的号码都会转发"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward-0.text_allow",
+          "name": "允许转发的内容的正则字符串",
+          "val": "",
+          "type": "textarea",
+          "desc": "符合的内容才会转发 例: (码|快递) 表示只允许这包含这俩词的内容. 默认为空 允许转发所有内容"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward-0.text_deny",
+          "name": "不允许转发的内容的正则字符串",
+          "val": "",
+          "type": "textarea",
+          "desc": "符合的内容不会转发 其他的内容都会转发"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward-0.code_test",
+          "name": "判断内容是否包含验证码的正则字符串",
+          "val": "",
+          "type": "textarea",
+          "desc": "验证码提取逻辑没有很好的思路 现在需要先判断该内容是否有验证码 再提取验证码. 默认为 .+(码) 表示内容符合 'X码' 这样的格式"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward-0.code_get",
+          "name": "从内容提取验证码的正则字符串",
+          "val": "",
+          "type": "textarea",
+          "desc": "提取的验证码将作为可复制的内容 方便 Bark 复制. 默认为 \\d{4,6} 表示提取4-6位的数字"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward-0.title",
+          "name": "通知标题模板",
+          "val": "",
+          "type": "text",
+          "desc": "默认: [号码], 例: 10010"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward-0.subtitle",
+          "name": "通知副标题模板",
+          "val": "",
+          "type": "text",
+          "desc": "默认: [码][复制提示], 例: 123456(长按/下拉复制验证码)"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward-0.body",
+          "name": "通知正文模板",
+          "val": "",
+          "type": "textarea",
+          "desc": "默认: [内容], 例: 您的验证码为 123456"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward-0.bark",
+          "name": "转发到 Bark/自建服务端 等",
+          "val": "",
+          "type": "textarea",
+          "desc": "[推送标题], [推送内容], [复制内容] 会被自动替换. 形如 https://api.day.app/XXXXXXXXX/[推送标题]/[推送内容]?group=sms&autoCopy=1&isArchive=1&icon=https%3A%2F%2Fraw.githubusercontent.com%2Fxream%2Fscripts%2Fmain%2Fsurge%2Fmodules%2Fsms-forward%2Fasset%2F1.png&copy=[复制内容]"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward-0.pushdeer",
+          "name": "转发到 PushDeer/PushPlus 等",
+          "val": "",
+          "type": "textarea",
+          "desc": "[推送全文] 会被自动替换. 形如 https://api2.pushdeer.com/message/push?pushkey=XXXXXXXXXXX&text=[推送全文]"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward-0.TGBOT",
+          "name": "转发到 TGBOT",
+          "val": "",
+          "type": "textarea",
+          "desc": "[推送标题], [推送内容], [复制内容] 会被自动替换. 形如 https://api.day.app/XXXXXXXXX/[推送标题]/[推送内容]?group=sms&autoCopy=1&isArchive=1&icon=https%3A%2F%2Fraw.githubusercontent.com%2Fxream%2Fscripts%2Fmain%2Fsurge%2Fmodules%2Fsms-forward%2Fasset%2F1.png&copy=[复制内容]"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward-0.smartReminderTitle",
+          "name": "Bark 转发到 smartReminder",
+          "val": "",
+          "type": "textarea",
+          "desc": "Smart Reminder 标题"
+        }
+      ],
+      "icons": [
+        "https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/master/sms-forward/sms-forward.png",
+        "https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/master/sms-forward/sms-forward.png"
+      ]
+    },
+    {
+      "id": "Alwaysbesideyou.sms_forward-1",
+      "name": "短信转发-1",
+      "descs_html": [
+        "<a href=\"https://github.com/Alwaysbesideyou/Quantumult-X-Clash/tree/master/sms-forward\">查看文档</a>",
+        "<a onClick=\"window.location.reload(true);\">刷新</a>"
+      ],
+      "keys": [
+        "@Alwaysbesideyou.sms_forward-1.disabled",
+        "@Alwaysbesideyou.sms_forward-1.sender_allow",
+        "@Alwaysbesideyou.sms_forward-1.sender_deny",
+        "@Alwaysbesideyou.sms_forward-1.text_allow",
+        "@Alwaysbesideyou.sms_forward-1.text_deny",
+        "@Alwaysbesideyou.sms_forward-1.code_test",
+        "@Alwaysbesideyou.sms_forward-1.code_get",
+        "@Alwaysbesideyou.sms_forward-1.title",
+        "@Alwaysbesideyou.sms_forward-1.subtitle",
+        "@Alwaysbesideyou.sms_forward-1.body",
+        "@Alwaysbesideyou.sms_forward-1.pushdeer",
+        "@Alwaysbesideyou.sms_forward-1.bark",
         "@Alwaysbesideyou.sms_forward-1.TGBOT",
         "@Alwaysbesideyou.sms_forward-1.smartReminderTitle"
       ],
@@ -324,84 +324,84 @@
       "repo": "https://github.com/Alwaysbesideyou",
       "settings": [
         {
-          "id": "@xream.sms_forward-1.disabled",
+          "id": "@Alwaysbesideyou.sms_forward-1.disabled",
           "name": "禁用",
           "val": false,
           "type": "boolean",
           "desc": "默认启用"
         },
         {
-          "id": "@xream.sms_forward-1.sender_allow",
+          "id": "@Alwaysbesideyou.sms_forward-1.sender_allow",
           "name": "允许转发的号码的正则字符串",
           "val": "",
           "type": "textarea",
           "desc": "符合的号码才会转发 例: (18600000000|18611111111) 表示只转发这两个号码. ^186 表示只转发186开头的号码. ^\\d{11}$ 表示只转发11位的号码. 默认为空 允许转发所有号码"
         },
         {
-          "id": "@xream.sms_forward-1.sender_deny",
+          "id": "@Alwaysbesideyou.sms_forward-1.sender_deny",
           "name": "不允许转发的号码的正则字符串",
           "val": "",
           "type": "textarea",
           "desc": "符合的号码不会转发 其他的号码都会转发"
         },
         {
-          "id": "@xream.sms_forward-1.text_allow",
+          "id": "@Alwaysbesideyou.sms_forward-1.text_allow",
           "name": "允许转发的内容的正则字符串",
           "val": "",
           "type": "textarea",
           "desc": "符合的内容才会转发 例: (码|快递) 表示只允许这包含这俩词的内容. 默认为空 允许转发所有内容"
         },
         {
-          "id": "@xream.sms_forward-1.text_deny",
+          "id": "@Alwaysbesideyou.sms_forward-1.text_deny",
           "name": "不允许转发的内容的正则字符串",
           "val": "",
           "type": "textarea",
           "desc": "符合的内容不会转发 其他的内容都会转发"
         },
         {
-          "id": "@xream.sms_forward-1.code_test",
+          "id": "@Alwaysbesideyou.sms_forward-1.code_test",
           "name": "判断内容是否包含验证码的正则字符串",
           "val": "",
           "type": "textarea",
           "desc": "验证码提取逻辑没有很好的思路 现在需要先判断该内容是否有验证码 再提取验证码. 默认为 .+(码) 表示内容符合 'X码' 这样的格式"
         },
         {
-          "id": "@xream.sms_forward-1.code_get",
+          "id": "@Alwaysbesideyou.sms_forward-1.code_get",
           "name": "从内容提取验证码的正则字符串",
           "val": "",
           "type": "textarea",
           "desc": "提取的验证码将作为可复制的内容 方便 Bark 复制. 默认为 \\d{4,6} 表示提取4-6位的数字"
         },
         {
-          "id": "@xream.sms_forward-1.title",
+          "id": "@Alwaysbesideyou.sms_forward-1.title",
           "name": "通知标题模板",
           "val": "",
           "type": "text",
           "desc": "默认: [号码], 例: 10010"
         },
         {
-          "id": "@xream.sms_forward-1.subtitle",
+          "id": "@Alwaysbesideyou.sms_forward-1.subtitle",
           "name": "通知副标题模板",
           "val": "",
           "type": "text",
           "desc": "默认: [码][复制提示], 例: 123456(长按/下拉复制验证码)"
         },
         {
-          "id": "@xream.sms_forward-1.body",
+          "id": "@Alwaysbesideyou.sms_forward-1.body",
           "name": "通知正文模板",
           "val": "",
           "type": "textarea",
           "desc": "默认: [内容], 例: 您的验证码为 123456"
         },
         {
-          "id": "@xream.sms_forward-1.bark",
+          "id": "@Alwaysbesideyou.sms_forward-1.bark",
           "name": "转发到 Bark/自建服务端 等",
           "val": "",
           "type": "textarea",
           "desc": "[推送标题], [推送内容], [复制内容] 会被自动替换. 形如 https://api.day.app/XXXXXXXXX/[推送标题]/[推送内容]?group=sms&autoCopy=1&isArchive=1&icon=https%3A%2F%2Fraw.githubusercontent.com%2Fxream%2Fscripts%2Fmain%2Fsurge%2Fmodules%2Fsms-forward%2Fasset%2F1.png&copy=[复制内容]"
         },
         {
-          "id": "@xream.sms_forward-1.pushdeer",
+          "id": "@Alwaysbesideyou.sms_forward-1.pushdeer",
           "name": "转发到 PushDeer/PushPlus 等",
           "val": "",
           "type": "textarea",
@@ -441,28 +441,28 @@
         "<a onClick=\"window.location.reload(true);\">刷新</a>"
       ],
       "keys": [
-        "@xream.10010.disabled",
-        "@xream.10010.systemNotifyDisabled",
-        "@xream.10010.requestNotifyDisabled",
-        "@xream.10010.panelNotifyDisabled",
-        "@xream.10010.tileNotifyDisabled",
-        "@xream.10010.notifyDisabled",
-        "@xream.10010.cookie",
-        "@xream.10010.mobile",
-        "@xream.10010.password",
-        "@xream.10010.appId",
-        "@xream.10010.excludeRemainPkg",
-        "@xream.10010.freePkg",
-        "@xream.10010.otherPkg",
-        "@xream.10010.ignoreFlow",
-        "@xream.10010.remainFlowOnly",
-        "@xream.10010.title",
-        "@xream.10010.subtitle",
-        "@xream.10010.body",
-        "@xream.10010.bark",
-        "@xream.10010.otherPkgTpl",
-        "@xream.10010.detail",
-        "@xream.10010.detailText"
+        "@Alwaysbesideyou.10010.disabled",
+        "@Alwaysbesideyou.10010.systemNotifyDisabled",
+        "@Alwaysbesideyou.10010.requestNotifyDisabled",
+        "@Alwaysbesideyou.10010.panelNotifyDisabled",
+        "@Alwaysbesideyou.10010.tileNotifyDisabled",
+        "@Alwaysbesideyou.10010.notifyDisabled",
+        "@Alwaysbesideyou.10010.cookie",
+        "@Alwaysbesideyou.10010.mobile",
+        "@Alwaysbesideyou.10010.password",
+        "@Alwaysbesideyou.10010.appId",
+        "@Alwaysbesideyou.10010.excludeRemainPkg",
+        "@Alwaysbesideyou.10010.freePkg",
+        "@Alwaysbesideyou.10010.otherPkg",
+        "@Alwaysbesideyou.10010.ignoreFlow",
+        "@Alwaysbesideyou.10010.remainFlowOnly",
+        "@Alwaysbesideyou.10010.title",
+        "@Alwaysbesideyou.10010.subtitle",
+        "@Alwaysbesideyou.10010.body",
+        "@Alwaysbesideyou.10010.bark",
+        "@Alwaysbesideyou.10010.otherPkgTpl",
+        "@Alwaysbesideyou.10010.detail",
+        "@Alwaysbesideyou.10010.detailText"
       ],
       "author": "@Alwaysbesideyou",
       "repo": "https://github.com/Alwaysbesideyou/Quantumult-X-Clash/blob/master/10010",
@@ -482,21 +482,21 @@
       ],
       "settings": [
         {
-          "id": "@xream.10010.disabled",
+          "id": "@Alwaysbesideyou.10010.disabled",
           "name": "禁用",
           "val": false,
           "type": "boolean",
           "desc": "默认启用"
         },
         {
-          "id": "@xream.10010.mobile",
+          "id": "@Alwaysbesideyou.10010.mobile",
           "name": "手机号",
           "val": "",
           "type": "text",
           "desc": "联通客户端登录手机号"
         },
         {
-          "id": "@xream.10010.code",
+          "id": "@Alwaysbesideyou.10010.code",
           "name": "验证码(执行验证码登录才需要填)",
           "placeholder": "",
           "val": "",
@@ -504,133 +504,133 @@
           "desc": "登录短信验证码"
         },
         {
-          "id": "@xream.10010.password",
+          "id": "@Alwaysbesideyou.10010.password",
           "name": "密码",
           "val": "",
           "type": "text",
           "desc": "联通客户端登录密码"
         },
         {
-          "id": "@xream.10010.appId",
+          "id": "@Alwaysbesideyou.10010.appId",
           "name": "appId(仅填写手机号密码和appId 即可自动登录)",
           "val": "",
           "type": "text",
           "desc": "联通客户端 appId"
         },
         {
-          "id": "@xream.10010.cookie",
+          "id": "@Alwaysbesideyou.10010.cookie",
           "name": "Cookie(一般情况下不需要手动填)",
           "val": "",
           "type": "text",
           "desc": "Cookie"
         },
         {
-          "id": "@xream.10010.excludeRemainPkg",
+          "id": "@Alwaysbesideyou.10010.excludeRemainPkg",
           "name": "不计算剩余流量的流量包名正则",
           "val": "",
           "type": "text",
           "desc": "在联通原始值不正确时 进行修正. 例 (定向流量|免流资费|免费流量) , 匹配的包不计算剩余"
         },
         {
-          "id": "@xream.10010.freePkg",
+          "id": "@Alwaysbesideyou.10010.freePkg",
           "name": "叠加到免流流量的流量包名正则",
           "val": "",
           "type": "text",
           "desc": "在联通原始值不正确时 进行修正. 例 设置 (定向流量|免流资费|免费流量), 匹配的包叠加到总免流流量"
         },
         {
-          "id": "@xream.10010.otherPkg",
+          "id": "@Alwaysbesideyou.10010.otherPkg",
           "name": "需要单独显示的流量包名正则",
           "val": "",
           "type": "text",
           "desc": "例 设置 (加油包|福利|学习强国), 将显示 剩余 536.98M 加油包 46.12M 福利 490.86M 学习强国 1234.56M 免流 41.66G"
         },
         {
-          "id": "@xream.10010.ignoreFlow",
+          "id": "@Alwaysbesideyou.10010.ignoreFlow",
           "name": "流量变化忽略阈值(单位 M)",
           "val": 0,
           "type": "number",
           "desc": "小于此数值的流量变化不通知"
         },
         {
-          "id": "@xream.10010.remainFlowOnly",
+          "id": "@Alwaysbesideyou.10010.remainFlowOnly",
           "name": "当前时间段内有*非免流*才会通知",
           "val": false,
           "type": "boolean",
           "desc": "默认关闭, 所有用量都会通知. 开启后, 当前时间段内有*非免流*才会通知"
         },
         {
-          "id": "@xream.10010.title",
+          "id": "@Alwaysbesideyou.10010.title",
           "name": "通知标题模板",
           "val": "",
           "type": "text",
           "desc": "默认: [套], 例: 流邦卡19元套餐"
         },
         {
-          "id": "@xream.10010.subtitle",
+          "id": "@Alwaysbesideyou.10010.subtitle",
           "name": "通知副标题模板",
           "val": "",
           "type": "text",
           "desc": "默认: 时长 [时] 跳 [跳] 免 [免], 例: 时长 1分钟 跳 10M 免 10M"
         },
         {
-          "id": "@xream.10010.body",
+          "id": "@Alwaysbesideyou.10010.body",
           "name": "通知正文模板",
           "val": "",
           "type": "textarea",
           "desc": "默认: 剩余 [剩] [单] 免流 [总免], 例: 剩余 5.03G 福利 1G 免流 26.35G"
         },
         {
-          "id": "@xream.10010.otherPkgTpl",
+          "id": "@Alwaysbesideyou.10010.otherPkgTpl",
           "name": "通知单独显示的包名模板(即 [单] 的内部模板)",
           "val": "",
           "type": "textarea",
           "desc": "默认: [包] 剩余[剩] 已用[用], 例: 福利包 剩余 1G 已用 1G"
         },
         {
-          "id": "@xream.10010.bark",
+          "id": "@Alwaysbesideyou.10010.bark",
           "name": "使用 Bark 通知而不是当前 app 的通知",
           "val": "",
           "type": "textarea",
           "desc": "[推送标题]/[推送内容]会被自动替换 形如 https://api.day.app/XXXXXXXXX/[推送标题]/[推送内容]?group=10010&autoCopy=1&isArchive=1&icon=https%3A%2F%2Fraw.githubusercontent.com%2Fanker1209%2Ficon%2Fmain%2Fzglt.png&sound=shake&level=timeSensitive"
         },
         {
-          "id": "@xream.10010.systemNotifyDisabled",
+          "id": "@Alwaysbesideyou.10010.systemNotifyDisabled",
           "name": "禁用联通系统升级时的通知",
           "val": false,
           "type": "boolean",
           "desc": "默认启用"
         },
         {
-          "id": "@xream.10010.requestNotifyDisabled",
+          "id": "@Alwaysbesideyou.10010.requestNotifyDisabled",
           "name": "禁用作为请求脚本使用时的通知",
           "val": false,
           "type": "boolean",
           "desc": "默认启用"
         },
         {
-          "id": "@xream.10010.panelNotifyDisabled",
+          "id": "@Alwaysbesideyou.10010.panelNotifyDisabled",
           "name": "禁用作为 Surge 面板 (Panel) 脚本使用时的通知",
           "val": false,
           "type": "boolean",
           "desc": "默认启用"
         },
         {
-          "id": "@xream.10010.tileNotifyDisabled",
+          "id": "@Alwaysbesideyou.10010.tileNotifyDisabled",
           "name": "禁用作为 Stash 面板 (Tile) 脚本使用时的通知",
           "val": false,
           "type": "boolean",
           "desc": "默认启用"
         },
         {
-          "id": "@xream.10010.notifyDisabled",
+          "id": "@Alwaysbesideyou.10010.notifyDisabled",
           "name": "禁用通知",
           "val": false,
           "type": "boolean",
           "desc": "默认启用"
         },
         {
-          "id": "@xream.10010.detailText",
+          "id": "@Alwaysbesideyou.10010.detailText",
           "name": "详情文本",
           "val": "",
           "type": "textarea",
@@ -640,7 +640,7 @@
           "desc": ""
         },
         {
-          "id": "@xream.10010.detail",
+          "id": "@Alwaysbesideyou.10010.detail",
           "name": "详情数据",
           "val": "",
           "type": "textarea",
