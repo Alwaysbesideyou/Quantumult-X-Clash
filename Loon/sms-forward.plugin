@@ -1,0 +1,12 @@
+#!name = 短信转发
+#!desc = 利用302重定向增强Spotlight功能。
+#!openUrl = http://boxjs.net/#/app/xream.sms_forward
+#!author = Alwaysbesideyou
+#!homepage = https://github.com/Alwaysbesideyou
+#!icon = https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/master/Maria.png
+
+[MITM]
+hostname=scan.call.f.360.cn,jprx.m.qq.com 
+
+[Script]
+http-request (^https?:\/\/scan\.call\.f\.360\.cn\/ios_message\.php|^https?:\/\/jprx\.m\.qq\.com\/forward) script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/sms-forward/sms-forward.js, requires-body=true, timeout=120, tag=Sms-Forward
