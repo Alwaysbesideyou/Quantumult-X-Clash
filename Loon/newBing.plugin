@@ -4,7 +4,7 @@
 #!homepage = https://github.com/Alwaysbesideyou
 #!icon = https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/master/Maria.png
 
-[Header Rewrite]
+[Rewrite]
 ^https:\/\/www\.bing\.com\/(search|new) header-replace-regex User-Agent \w+\/[\d\.]+$ "AppleWebKit/537.36 Chrome/110.0 Safari/537.36 Edg/110.0"
 
 [MITM]
