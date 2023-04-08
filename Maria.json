@@ -51,7 +51,10 @@
         "@Alwaysbesideyou.sms_forward.bark",
         "@Alwaysbesideyou.sms_forward.keys",
         "@Alwaysbesideyou.sms_forward.TGBOT",
-        "@Alwaysbesideyou.sms_forward.smartReminderTitle"
+        "@Alwaysbesideyou.sms_forward.smartReminderTitle",
+        "@Alwaysbesideyou.sms_forward.ssidList",
+        "@Alwaysbesideyou.sms_forward.authkey",
+        "@Alwaysbesideyou.sms_forward.authkeyExpiredTimeout"
       ],
       "author": "@Alwaysbesideyou",
       "repo": "https://github.com/Alwaysbesideyou",
@@ -160,6 +163,27 @@
           "val": "",
           "type": "textarea",
           "desc": "默认只取 sms_forward 的配置. 设置为 sms_forward-1, sms_forward-2 后, 将同时处理这三个配置"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward.ssidList",
+          "name": "转发到 PushDeer/PushPlus 等",
+          "val": "",
+          "type": "textarea",
+          "desc": "需要匹配的ssid列表和对应ip地址"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward.authkey",
+          "name": "转发到 PushDeer/PushPlus 等",
+          "val": "",
+          "type": "textarea",
+          "desc": "密钥"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward.authkeyExpiredTimeout",
+          "name": "转发到 PushDeer/PushPlus 等",
+          "val": "",
+          "type": "textarea",
+          "desc": "密钥过期时间"
         }
       ],
       "icons": [
@@ -188,7 +212,10 @@
         "@Alwaysbesideyou.sms_forward-0.pushdeer",
         "@Alwaysbesideyou.sms_forward-0.bark",
         "@Alwaysbesideyou.sms_forward-0.TGBOT",
-        "@Alwaysbesideyou.sms_forward-0.smartReminderTitle"
+        "@Alwaysbesideyou.sms_forward-0.smartReminderTitle",
+        "@Alwaysbesideyou.sms_forward-0.ssidList",
+        "@Alwaysbesideyou.sms_forward-0.authkey",
+        "@Alwaysbesideyou.sms_forward-0.authkeyExpiredTimeout"
       ],
       "author": "@Alwaysbesideyou",
       "repo": "https://github.com/Alwaysbesideyou",
@@ -290,6 +317,27 @@
           "val": "",
           "type": "textarea",
           "desc": "[推送全文] 会被自动替换. 形如 https://api2.pushdeer.com/message/push?pushkey=XXXXXXXXXXX&text=[推送全文]"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward-0.ssidList",
+          "name": "转发到 PushDeer/PushPlus 等",
+          "val": "",
+          "type": "textarea",
+          "desc": "需要匹配的ssid列表和对应ip地址"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward-0.authkey",
+          "name": "转发到 PushDeer/PushPlus 等",
+          "val": "",
+          "type": "textarea",
+          "desc": "密钥"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward-0.authkeyExpiredTimeout",
+          "name": "转发到 PushDeer/PushPlus 等",
+          "val": "",
+          "type": "textarea",
+          "desc": "密钥过期时间"
         }
       ],
       "icons": [
@@ -318,7 +366,10 @@
         "@Alwaysbesideyou.sms_forward-1.pushdeer",
         "@Alwaysbesideyou.sms_forward-1.bark",
         "@Alwaysbesideyou.sms_forward-1.TGBOT",
-        "@Alwaysbesideyou.sms_forward-1.smartReminderTitle"
+        "@Alwaysbesideyou.sms_forward-1.smartReminderTitle",
+        "@Alwaysbesideyou.sms_forward-1.ssidList",
+        "@Alwaysbesideyou.sms_forward-1.authkey",
+        "@Alwaysbesideyou.sms_forward-1.authkeyExpiredTimeout"
       ],
       "author": "@Alwaysbesideyou",
       "repo": "https://github.com/Alwaysbesideyou",
@@ -420,6 +471,27 @@
           "val": "",
           "type": "textarea",
           "desc": "[推送全文] 会被自动替换. 形如 https://api2.pushdeer.com/message/push?pushkey=XXXXXXXXXXX&text=[推送全文]"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward-1.ssidList",
+          "name": "转发到 PushDeer/PushPlus 等",
+          "val": "",
+          "type": "textarea",
+          "desc": "需要匹配的ssid列表和对应ip地址"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward-1.authkey",
+          "name": "转发到 PushDeer/PushPlus 等",
+          "val": "",
+          "type": "textarea",
+          "desc": "密钥"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward-1.authkeyExpiredTimeout",
+          "name": "转发到 PushDeer/PushPlus 等",
+          "val": "",
+          "type": "textarea",
+          "desc": "密钥过期时间"
         }
       ],
       "icons": [
