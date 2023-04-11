@@ -44,6 +44,7 @@
         "@Alwaysbesideyou.sms_forward.text_deny",
         "@Alwaysbesideyou.sms_forward.code_test",
         "@Alwaysbesideyou.sms_forward.code_get",
+        "@Alwaysbesideyou.sms_forward.smsTitle_get",
         "@Alwaysbesideyou.sms_forward.title",
         "@Alwaysbesideyou.sms_forward.subtitle",
         "@Alwaysbesideyou.sms_forward.body",
@@ -107,6 +108,13 @@
           "val": "",
           "type": "textarea",
           "desc": "提取的验证码将作为可复制的内容 方便 Bark 复制. 默认为 \\d{4,6} 表示提取4-6位的数字"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward.smsTitle_get",
+          "name": "从内容提取短信标题的正则字符串",
+          "val": "",
+          "type": "textarea",
+          "desc": "提取的短信标题，可在智能提醒中使用。默认为【.+】。"
         },
         {
           "id": "@Alwaysbesideyou.sms_forward.title",
@@ -206,6 +214,7 @@
         "@Alwaysbesideyou.sms_forward-0.text_deny",
         "@Alwaysbesideyou.sms_forward-0.code_test",
         "@Alwaysbesideyou.sms_forward-0.code_get",
+        "@Alwaysbesideyou.sms_forward-0.smsTitle_get",
         "@Alwaysbesideyou.sms_forward-0.title",
         "@Alwaysbesideyou.sms_forward-0.subtitle",
         "@Alwaysbesideyou.sms_forward-0.body",
@@ -268,6 +277,13 @@
           "val": "",
           "type": "textarea",
           "desc": "提取的验证码将作为可复制的内容 方便 Bark 复制. 默认为 \\d{4,6} 表示提取4-6位的数字"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward-0.smsTitle_get",
+          "name": "从内容提取短信标题的正则字符串",
+          "val": "",
+          "type": "textarea",
+          "desc": "提取的短信标题，可在智能提醒中使用。默认为【.+】。"
         },
         {
           "id": "@Alwaysbesideyou.sms_forward-0.title",
@@ -360,6 +376,7 @@
         "@Alwaysbesideyou.sms_forward-1.text_deny",
         "@Alwaysbesideyou.sms_forward-1.code_test",
         "@Alwaysbesideyou.sms_forward-1.code_get",
+        "@Alwaysbesideyou.sms_forward-1.smsTitle_get",
         "@Alwaysbesideyou.sms_forward-1.title",
         "@Alwaysbesideyou.sms_forward-1.subtitle",
         "@Alwaysbesideyou.sms_forward-1.body",
@@ -422,6 +439,13 @@
           "val": "",
           "type": "textarea",
           "desc": "提取的验证码将作为可复制的内容 方便 Bark 复制. 默认为 \\d{4,6} 表示提取4-6位的数字"
+        },
+        {
+          "id": "@Alwaysbesideyou.sms_forward-1.smsTitle_get",
+          "name": "从内容提取短信标题的正则字符串",
+          "val": "",
+          "type": "textarea",
+          "desc": "提取的短信标题，可在智能提醒中使用。默认为【.+】。"
         },
         {
           "id": "@Alwaysbesideyou.sms_forward-1.title",
