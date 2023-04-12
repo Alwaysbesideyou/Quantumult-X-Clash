@@ -1,5 +1,5 @@
-#!name = biliAll
-#!desc = 哔哩哔哩相关
+#!name = biliSwitch
+#!desc = 哔哩哔哩切换
 #!openUrl = https://github.com/Alwaysbesideyou
 #!author = Alwaysbesideyou
 #!homepage = https://github.com/Alwaysbesideyou
@@ -11,7 +11,5 @@ http-response ^https:\/\/ap(p|i)\.bili(bili|api)\.(com|net)\/(pgc\/view\/v\d\/ap
 #可选, 适用于搜索指定地区的番剧
 http-request ^https:\/\/ap(p|i)\.bili(bili|api)\.(com|net)\/x\/v\d\/search(\/type)?\?.+?%20(%E6%B8%AF|%E5%8F%B0|%E4%B8%AD)& script-path=https://raw.githubusercontent.com/NobyDa/Script/master/Surge/JS/Bili_Auto_Regions.js, tag=bili自动地区(搜索)
 
-http-response https:\/\/ap(p|i)\.bilibili\.com\/((pgc\/player\/api\/playurl)|(x\/v2\/account\/myinfo\?)|(x\/v2\/account/mine\?)) requires-body=1, script-path=https://raw.githubusercontent.com/Sunert/Script/master/Script/BiliHD.js, tag=Bilipj
-
 [MITM]
-hostname = ap?.bili*i.com, ap?.bili*i.net, app.bilibili.com
+hostname = ap?.bili*i.com, ap?.bili*i.net

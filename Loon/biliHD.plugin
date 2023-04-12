@@ -1,0 +1,12 @@
+#!name = BiliHD
+#!desc = 哔哩哔哩HD
+#!openUrl = https://github.com/Alwaysbesideyou
+#!author = Alwaysbesideyou
+#!homepage = https://github.com/Alwaysbesideyou
+#!icon = https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/master/Maria.png
+
+[Script]
+http-response https:\/\/ap(p|i)\.bilibili\.com\/((pgc\/player\/api\/playurl)|(x\/v2\/account\/myinfo\?)|(x\/v2\/account/mine\?)) requires-body=1, script-path=https://raw.githubusercontent.com/Sunert/Script/master/Script/BiliHD.js, tag=Bilipj
+
+[MITM]
+hostname = app.bilibili.com
