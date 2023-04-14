@@ -1,4 +1,4 @@
-#!name = 搜索跳转
+#!name = Q-Search - duckduckgo
 #!desc = 利用302重定向增强Spotlight功能。
 #!openUrl = https://github.com/Alwaysbesideyou
 #!author = Alwaysbesideyou
@@ -6,44 +6,11 @@
 #!icon = https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/master/Maria.png
 
 [rewrite]
-#vi=知乎
-#jd=京东
-#tb=淘宝
-#vv=vvebo
-#bl=bilibili
-#db=豆瓣
-#md=什么值得买
-#mw=美团
-#pdd=pdd
-
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=vi\+ 302 shortcuts://x-callback-url/run-shortcut?name=URL%20Rewrite&input=text&text=vi、
-
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=jd\+ 302 shortcuts://x-callback-url/run-shortcut?name=URL%20Rewrite&input=text&text=jd、
-
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=tb\+ 302 shortcuts://x-callback-url/run-shortcut?name=URL%20Rewrite&input=text&text=tb、
-
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=vv\+ 302 shortcuts://x-callback-url/run-shortcut?name=URL%20Rewrite&input=text&text=vv、
-
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=bl\+ 302 shortcuts://x-callback-url/run-shortcut?name=URL%20Rewrite&input=text&text=bl、
-
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=db\+ 302 shortcuts://x-callback-url/run-shortcut?name=URL%20Rewrite&input=text&text=db、
-
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=md\+ 302 shortcuts://x-callback-url/run-shortcut?name=URL%20Rewrite&input=text&text=md、
-
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=mw\+ 302 shortcuts://x-callback-url/run-shortcut?name=URL%20Rewrite&input=text&text=mw、
-
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=oz\+ 302 shortcuts://x-callback-url/run-shortcut?name=URL%20Rewrite&input=text&text=oz、
-
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=pdd\+ 302 shortcuts://x-callback-url/run-shortcut?name=URL%20Rewrite&input=text&text=pdd、
-
-
-# Q-Search
-# Modified by nzw9314
 # From Neurogram (https://raw.githubusercontent.com/Neurogram-R/Surge/master/module/Q-Search.sgmodule)
 
 # - Safari 内输入 命令 + 空格 + 关键词 快速指定搜索引擎搜索
 
-#  注：先进入设置更改 Safari 默认搜索为 DuckDuckGO
+#  注：先进入设置更改 Safari 默认搜索为 Google
 
 # 可自行修改指令或者添加搜索引擎
 
@@ -89,120 +56,58 @@
 # gg： Google 搜索
 # 无指令转  DuckDuckGo 搜索
 
-#gm   (Google图片)
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=gm\+([^&]+).+ 302 https://www.google.com/search?&tbm=isch&q=$4
-# gh   (GitHub)
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=gh\+([^&]+).+ 302 https://github.com/search?q=$4
-
-# sof  (Stack Overflow)
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=sof\+([^&]+).+ 302 https://stackoverflow.com/search?q=$4
-
-# se  (StackExchange)
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=se\+([^&]+).+ 302 https://stackexchange.com/search?q=$4
-
-# wa  (WolframAlpha)
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=wa\+([^&]+).+ 302 https://www.wolframalpha.com/input/?i=$4
-
-# wiki  (维基百科)
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=wiki(\+|%20)([^&]+).+ 302 http://wikipedia.org/wiki/$2
-
-# wk  (维基中文)
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=wk(\+|%20)([^&]+).+ 302 https://zh.wikipedia.org/wiki/$2
-
-# mg  (Magi)
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=mg(\+|%20)([^&]+).+ 302 https://magi.com/search?q=$2
-
-# tf  (Google 搜索 TestFlight)
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=tf(\+|%20)([^&]+).+ 302 https://www.google.com/search?as_q=$2&as_sitesearch=testflight.apple.com
-
-# > 翻译
-# yd   (有道)
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=yd\+([^&]+).+ 302 http://dict.youdao.com/search?q=$4
-
-# trc  (Google 译至中)
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=trc\+([^&]+).+ 302 https://translate.google.com/#view=home&op=translate&sl=auto&tl=zh-CN&text=$4
-
-# tre  (Google 译至英)
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=tre\+([^&]+).+ 302 https://translate.google.com/#view=home&op=translate&sl=auto&tl=en&text=$4
-
-#gt （Google 翻译）
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=gt\+([^&]+).+ 302 https://translate.google.com/#view=home&op=translate&sl=auto&tl=en&text=$4
-
-# 社区
-# db：豆瓣
-#^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=db\+([^&]+).+ 302 https://m.douban.com/search/?query=$4
-#douban:///search?q=URL_ENCODED
-
-# zh: 知乎
-#^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=zh\+([^&]+).+ 302 https://www.zhihu.com/search?type=content&q=$4
-
-# wb: 微博
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=wb\+([^&]+).+ 302 https://s.weibo.com/weibo/$4
-
-# wx: 微信
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=wx\+([^&]+).+ 302 https://weixin.sogou.com/weixinwap?query=$4
-
-# rd  (Reddit)
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=rd\+([^&]+).+ 302 https://www.reddit.com/search?q=$4
-
-# tw (Twitter)
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=tw\+([^&]+).+ 302 https://twitter.com/search?q=$4
-
-# ssp: 少数派
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=ssp\+([^&]+).+ 302 https://sspai.com/search/post/$4
-
-# csdn: CSDN
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=csdn\+([^&]+).+ 302 https://so.csdn.net/so/search/s.do?q=$4&t=&u=
-
-# > 购物
-# zdm: 什么值得买
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=zdm\+([^&]+).+ 302 https://search.m.smzdm.com/?v=b&s=$4
-
-# amz: 亚马逊
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=amz\+([^&]+).+ 302 https://www.amazon.cn/gp/aw/s/?k=$4
-
-# jd : 京东
-#^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=jd\+([^&]+).+ 302 https://so.m.jd.com/ware/search.action?keyword=$4
-
-# tb: 淘宝
-#^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=tb\+([^&]+).+ 302 https://s.m.taobao.com/h5?q=$4
-
-# tm: 天猫
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=tm\+([^&]+).+ 302 https://s.m.tmall.com/m/search.htm?q=$4
-
-# 视频资源
-
-# ac (Acfun)
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=ac\+([^&]+).+ 302 https://www.acfun.cn/search?keyword==$4
-
-# bli (哔哩哔哩)
-#^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=bli\+([^&]+).+ 302 https://m.bilibili.com/search?keyword=$4
-
-# ytb  (YouTube)
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=ytb\+([^&]+).+ 302 https://www.youtube.com/results?q=$4
-
-# gd  (Google Drive)
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=gd\+([^&]+).+ 302 https://www.google.com/search?q=%22Google+Drive%22+$4
-
-# tgd  (t.me/gdurl 搜索 Google Drive 资源)
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=tgd\+([^&]+).+ 302 https://t.me/s/gdurl?q=$4
-
 # 默认搜索
 
 # bi: 必应
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=bi\+([^&]+).+ 302 https://cn.bing.com/search?q=$4
+^https:\/\/duckduckgo.com\/\?q=bi\+([^&]+).+ 302 https://www.bing.com/search?q=$1
 
 # bd: 百度
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=bd\+([^&]+).+ 302 https://www.baidu.com/s?wd=$4
+^https:\/\/duckduckgo.com\/\?q=bd\+([^&]+).+ 302 https://www.baidu.com/s?wd=$1
 
 # ddg: DuckDuckGo
-^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=ddg\+([^&]+).+ 302 https://duckduckgo.com/?ia=about&q=$4
+^https:\/\/duckduckgo.com\/\?q=ddg\+([^&]+).+ 302 https://duckduckgo.com/?ia=about&q=$1
 
 # 无指令: 谷歌
-#^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=([^&]+).+ 302 https://www.google.com/search?q=$4
+^https:\/\/duckduckgo.com\/\?q=([^&]+).+ 302 https://www.google.com/search?q=$1
 
 # 无指令: 夸克
-#^https?:\/\/(www.)?(g|google)\.(cn|com)/search\?q=([^&]+).+ 302 https://quark.sm.cn/s?q=$4
+#^https:\/\/duckduckgo.com\/\?q=([^&]+).+ 302 https://quark.sm.cn/s?q=$1
+
+
+#vi=知乎
+#jd=京东
+#tb=淘宝
+#vv=vvebo
+#bl=bilibili
+#db=豆瓣
+#md=什么值得买
+#mw=美团
+#pdd=pdd
+
+^https:\/\/duckduckgo.com\/\?q=vi\+ 302 shortcuts://x-callback-url/run-shortcut?name=URL%20Rewrite&input=text&text=vi、
+
+^https:\/\/duckduckgo.com\/\?q=jd\+ 302 shortcuts://x-callback-url/run-shortcut?name=URL%20Rewrite&input=text&text=jd、
+
+^https:\/\/duckduckgo.com\/\?q=tb\+ 302 shortcuts://x-callback-url/run-shortcut?name=URL%20Rewrite&input=text&text=tb、
+
+^https:\/\/duckduckgo.com\/\?q=vv\+ 302 shortcuts://x-callback-url/run-shortcut?name=URL%20Rewrite&input=text&text=vv、
+
+^https:\/\/duckduckgo.com\/\?q=bl\+ 302 shortcuts://x-callback-url/run-shortcut?name=URL%20Rewrite&input=text&text=bl、
+
+^https:\/\/duckduckgo.com\/\?q=db\+ 302 shortcuts://x-callback-url/run-shortcut?name=URL%20Rewrite&input=text&text=db、
+
+^https:\/\/duckduckgo.com\/\?q=md\+ 302 shortcuts://x-callback-url/run-shortcut?name=URL%20Rewrite&input=text&text=md、
+
+^https:\/\/duckduckgo.com\/\?q=mw\+ 302 shortcuts://x-callback-url/run-shortcut?name=URL%20Rewrite&input=text&text=mw、
+
+^https:\/\/duckduckgo.com\/\?q=oz\+ 302 shortcuts://x-callback-url/run-shortcut?name=URL%20Rewrite&input=text&text=oz、
+
+^https:\/\/duckduckgo.com\/\?q=pdd\+ 302 shortcuts://x-callback-url/run-shortcut?name=URL%20Rewrite&input=text&text=pdd、
+
+#gm   (Google图片)
+^https:\/\/duckduckgo.com\/\?q=gm\+([^&]+).+ 302 https://www.google.com/search?&tbm=isch&q=$1
+# gh   (GitHub)
+^https:\/\/duckduckgo.com\/\?q=gh\+([^&]+).+ 302 https://github.com/search?q=$1
 
 [mitm]
-hostname = google.cn
+hostname = duckduckgo.com
