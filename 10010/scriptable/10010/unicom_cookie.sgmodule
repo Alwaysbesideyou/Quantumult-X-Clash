@@ -1,5 +1,6 @@
 #!name=中国联通组件服务
 #!desc=从联通 App 抓取含 ecs_token 的完整 Cookie，写入 ComponentService，供 Scripting 联通小组件读取
+#!author=Alwaysbesideyou
 
 [Script]
 联通组件Cookie = type=http-request, pattern=^https:\/\/mxx\.client\.10010\.com(?::443)?\/servicequerybusiness\/(.+), script-path=https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/master/10010/scriptable/10010/unicom_cookie.js, script-update-interval=0, timeout=10
