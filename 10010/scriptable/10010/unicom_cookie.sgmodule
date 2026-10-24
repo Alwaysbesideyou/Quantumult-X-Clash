@@ -1,5 +1,6 @@
 #!name=中国联通组件服务
 #!desc=从联通 App 抓取含 ecs_token 的完整 Cookie，写入 ComponentService，供 Scripting 联通小组件读取
+#!category=Alwaysbesideyou
 #!author=Alwaysbesideyou
 
 [Script]
