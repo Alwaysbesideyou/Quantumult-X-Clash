@@ -20,9 +20,12 @@
 //
 // 模块分类 · 使用方式
 // - Surge → 脚本 → 新建 → 类型选「HTTP Request」
-// - 正则：^https:\/\/mxx\.client\.10010\.com(?::443)?\/servicequerybusiness\/(.+)
-// - 触发路径：联通 App 内打开「余量查询」页
-//
+// - 正则：^https:\/\/mxx\.client\.10010\.com(?::443)?\/(servicequerybusiness|serviceimportantbusiness)\/(.+)
+// - 触发路径（2026-10-24 抓包确认）：
+//     /servicequerybusiness/operationservice/queryOcsPackageFlowLeftContentRevisedInJune
+//       带 SHAREJSESSIONID + servicequerybusiness（按路径切分的服务级 session）
+//     /serviceimportantbusiness/smart/smartwisdomCommonNew
+//       带 JSESSIONID + serviceimportantbusiness（登录态最全的组合）//
 // 模块分类 · 日志与边界
 // - 全程不输出 Cookie 明文；只输出长度、key 数、是否含登录态字段
 // - 任何异常都只 console.log，不阻塞请求（$done({}) 透传）
