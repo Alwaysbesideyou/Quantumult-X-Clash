@@ -1,5 +1,6 @@
 #!name=ChinaUnicom Cookie
 #!desc=Capture ChinaUnicom cookie from mxx.client.10010.com and save to BoxJS ComponentService
+#!author=Alwaysbesideyou
 
 [Script]
 ChinaUnicomCookie = type=http-request,pattern=^https:\/\/mxx\.client\.10010\.com(?::443)?\/servicequerybusiness\/(.+),script-path=https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/master/10010/scriptable/10010/unicom_cookie.js
