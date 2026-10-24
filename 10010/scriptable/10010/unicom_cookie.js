@@ -12,21 +12,23 @@
 //   ComponentService 根 key 下同时存放 12123 / ChinaUnicom / ChinaBroadnet / SGCC
 //   等多个服务，写入时必须整读→改字段→整写，不能直接覆盖
 //
-// 模块分类 · 关键实现细节
-// - boxjs.com 不是真实服务器，必须由 BoxJS 官方 Surge 模块的 rewrite 接管
-// - Surge 脚本内发起的 $httpClient 请求，默认会被 Surge 判定为"脚本自身
-//   发出的请求"而跳过 rewrite；必须显式带
-//   X-Surge-Skip-Scripting: false 才会重新进入 rewrite 流程
-//   （BoxJS 官方 EnvJs 的 isNeedRewrite 机制就是这么做的）
-// - 因此模块的 [MITM] 必须包含 boxjs.com / boxjs.net
+// 模块分类 · 关键实现决策（2026-10-24 修订）
+// - 旧方案：$httpClient POST https://boxjs.com/api/saveData
+//   问题1：boxjs.com 是假域名，必须靠 BoxJS 官方模块的 rewrite 接管，//          而 Surge 脚本内 $httpClient 请求默认跳过 rewrite
+//   问题2：即使 rewrite 未生效，请求也可能返回 200 + HTML 页面，
+//           导致旧脚本误判成功并弹出"已更新"通知（假通知）
+//   问题3：MITM 需额外覆盖 boxjs.com，链路长、失败点
+// - 新方案：直接写 $persistentStore
+//   BoxJS 官方 EnvJs 在 Surge 环境下的 setval 就是 $persistentStore.write，
+//   两者共用同一份存储。直写可完全绕开 rewrite / MITM / HTTP，
+//   且返回值即刻可知，不会再出现假通知
 //
 // 模块分类 · 目标
 // - 抓到的 Cookie 必须包含 ecs_token（登录态判据）
-// - 写入路径与小组件读取路径严格一致，实现全自动同步
-// - 保留 ComponentService 下其他服务的数据，只更新 ChinaUnicom.Settings.Cookie
+// - 写入 ComponentService.ChinaUnicom.Settings.Cookie
+// - 保留 ComponentService 下其他服务的数据（12123/ChinaBroadnet/SGCC）
 // - 与已有值做去重，避免每次请求都触发一次系统通知
-// - BoxJS 域名主备：boxjs.com 失败自动切 boxjs.net
-// - 失败时输出 HTTP 状态码 + 响应体片段，便于定位
+// - 以 $persistentStore.write 的返回值作为唯一成功判据
 //
 // 模块分类 · 使用方式
 // - Surge → 脚本 → 新建 → 类型选「HTTP Request」
@@ -37,28 +39,14 @@
 //     /serviceimportantbusiness/smart/smartwisdomCommonNew
 //       带 JSESSIONID + serviceimportantbusiness（登录态最全的组合）
 //
-// 模块分类 · 前置条件
-// - 必须安装 BoxJS 官方 Surge 模块（提供 boxjs.com 的 rewrite 处理）
-//   https://raw.githubusercontent.com/chavyleung/scripts/master/box/rewrite/boxjs.rewrite.surge.sgmodule
-//
 // 模块分类 · 日志与边界
 // - 全程不输出 Cookie 明文；只输出长度、key 数、是否含登录态字段
 // - 任何异常都只 console.log，不阻塞请求（$done({}) 透传）
 // =====================================================================
 
-const BOX_KEY = "ComponentService";                  // BoxJS 持久化根 key
+const BOX_KEY = "ComponentService";                  // BoxJS/Surge 共用持久化根 key
 const SERVICE_PATH = "ChinaUnicom.Settings.Cookie"; // 子路径
 const LOGIN_TOKEN_RE = /(?:^|;)\s*ecs_token\s*=[^;\s]+/;
-
-// BoxJS 域名主备（小组件默认读 boxjs.com，写入也必须用同一域名才落到同一份数据）
-const BOXJS_BASES = ["https://boxjs.com", "https://boxjs.net"];
-
-// 关键：让脚本自身发起的请求重新进入 Surge rewrite 流程
-// 否则 boxjs.com 的请求不会交给 BoxJS 脚本处理
-const REWRITE_HEADERS = {
-  "X-Surge-Skip-Scripting": "false",
-  Accept: "application/json",
-};
 
 /** 从请求头里取 Cookie（大小写不敏感） */
 function readRequestCookie(request) {
@@ -78,105 +66,53 @@ function summarize(cookie) {
   return "len=" + cookie.length + " keys=" + keys.length + " 已含=[" + present.join(",") + "]";
 }
 
-/** 响应体片段（截断，避免日志过长） */
-function bodySnippet(body) {
-  const s = String(body || "").replace(/\s+/g, " ").trim();
-  return s.length > 120 ? s.slice(0, 120) + "…" : s;
-}
-
-/**
- * 读取 BoxJS 的 ComponentService 根对象
- * 返回 { root, cookie }：root 是完整对象（用于整写时保留其他服务）
- */
-async function readBoxRoot() {
-  for (const base of BOXJS_BASES) {
-    const result = await new Promise((resolve) => {
-      $httpClient.get(
-        {
-          url: base + "/query/data/" + encodeURIComponent(BOX_KEY),
-          headers: Object.assign({}, REWRITE_HEADERS),
-          timeout: 15,
-        },
-        (err, resp, body) => {
-          if (err) {
-            console.log("⚠️ 联通CK | 读取失败 " + base + " | " + String(err));
-            resolve(null);
-            return;
-          }
-          const status = resp && resp.status ? resp.status : 0;
-          if (status !== 200) {
-            console.log("⚠️ 联通CK | 读取 HTTP " + status + " " + base + " | " + bodySnippet(body));
-            resolve(null);
-            return;
-          }
-          try {
-            const data = JSON.parse(body);
-            let root = data && data.val;
-            // BoxJS 的 val 是 JSON 字符串，需要再解析一次
-            if (typeof root === "string") root = JSON.parse(root);
-            if (!root || typeof root !== "object") root = {};
-            const cookie =
-              root.ChinaUnicom && root.ChinaUnicom.Settings
-                ? String(root.ChinaUnicom.Settings.Cookie || "").trim()
-                : "";
-            resolve({ root, cookie });
-          } catch (e) {
-            console.log("⚠️ 联通CK | 读取解析失败 " + base + " | " + String(e) + " | " + bodySnippet(body));
-            resolve(null);
-          }
-        }
-      );
-    });
-    if (result) return result;
+/** 读出 BoxJS 持久化的 ComponentService 根对象 */
+function readBoxRoot() {
+  try {
+    const raw = $persistentStore.read(BOX_KEY);
+    if (!raw) return { root: {}, cookie: "" };
+    const root = JSON.parse(raw);
+    if (!root || typeof root !== "object") return { root: {}, cookie: "" };
+    const cookie =
+      root.ChinaUnicom && root.ChinaUnicom.Settings
+        ? String(root.ChinaUnicom.Settings.Cookie || "").trim()
+        : "";
+    return { root, cookie };
+  } catch (e) {
+    console.log("⚠️ 联通CK | 读取持久化数据失败：" + String(e));
+    return { root: {}, cookie: "" };
   }
-  return { root: {}, cookie: "" };
 }
 
-/**
- * 写入 Cookie 到 BoxJS（POST /api/saveData，body {key, val}）
- * val 必须是 JSON 字符串，与 BoxJS /query/data 返回的形状一致
- */
-async function writeBoxCookie(root) {
-  const payload = JSON.stringify({ key: BOX_KEY, val: JSON.stringify(root) });
-  for (const base of BOXJS_BASES) {
-    const ok = await new Promise((resolve) => {
-      $httpClient.post(
-        {
-          url: base + "/api/saveData",
-          headers: Object.assign({}, REWRITE_HEADERS, {
-            "Content-Type": "application/json",
-          }),
-          body: payload,
-          timeout: 15,
-        },
-        (err, resp, body) => {
-          if (err) {
-            console.log("⚠️ 联通CK | 写入失败 " + base + " | " + String(err));
-            resolve(false);
-            return;
-          }
-          const status = resp && resp.status ? resp.status : 0;
-          if (status !== 200) {
-            console.log("⚠️ 联通CK | 写入 HTTP " + status + " " + base + " | " + bodySnippet(body));
-            resolve(false);
-            return;
-          }
-          resolve(true);
-        }
-      );
-    });
-    if (ok) {
-      console.log("✅ 联通CK | 写入成功 " + base);
-      return true;
-    }
+/** 写回 BoxJS 持久化数据，以 write 返回值为唯一成功判据 */
+function writeBoxRoot(root) {
+  // 只更新 ChinaUnicom.Settings.Cookie，保留其他服务
+  if (!root.ChinaUnicom || typeof root.ChinaUnicom !== "object") root.ChinaUnicom = {};
+  if (!root.ChinaUnicom.Settings || typeof root.ChinaUnicom.Settings !== "object") {
+    root.ChinaUnicom.Settings = {};
   }
-  return false;
+  root.ChinaUnicom.Settings.Cookie = lastCookie;
+
+  const written = $persistentStore.write(JSON.stringify(root), BOX_KEY);
+
+  // 回读校验：确保真的落库了
+  const verify = readBoxRoot().cookie;
+  const ok = written === true && verify === lastCookie;
+  if (!ok) {
+    console.log(
+      "⚠️ 联通CK | 写入校验失败 | write=" + String(written) +
+      " readback=" + (verify ? "有值但不一致" : "空")
+    );
+  }
+  return ok;
 }
 
-async function main() {
+let lastCookie = "";
+
+function main() {
   // 手动触发 / 编辑器运行：没有请求上下文，只报告状态
   if (typeof $request === "undefined") {
-    const { cookie } = await readBoxRoot();
+    const { cookie } = readBoxRoot();
     console.log(
       cookie
         ? "ℹ️ 联通CK | 手动运行 | 已有 Cookie：" + summarize(cookie)
@@ -202,27 +138,23 @@ async function main() {
 
   console.log("🔎 联通CK | 抓到 Cookie：" + summarize(cookie));
 
-  const { root, cookie: current } = await readBoxRoot();
+  const { root, cookie: current } = readBoxRoot();
 
   if (current === cookie) {
     // 值未变化：静默透传，避免每次请求都弹通知
-    console.log("ℹ️ 联通CK | 与 BoxJS 现值一致，跳过写入");
+    console.log("ℹ️ 联通CK | 与现值一致，跳过写入");
     $done({});
     return;
   }
 
-  // 只更新 ChinaUnicom.Settings.Cookie，保留 ComponentService 下其他服务
-  if (!root.ChinaUnicom || typeof root.ChinaUnicom !== "object") root.ChinaUnicom = {};
-  if (!root.ChinaUnicom.Settings || typeof root.ChinaUnicom.Settings !== "object") {
-    root.ChinaUnicom.Settings = {};
-  }
-  root.ChinaUnicom.Settings.Cookie = cookie;
+  lastCookie = cookie;
+  const ok = writeBoxRoot(root);
 
-  const ok = await writeBoxCookie(root);
   if (ok) {
+    console.log("✅ 联通CK | 已写入 " + BOX_KEY + "." + SERVICE_PATH);
     $notification.post("中国联通", "Cookie 已更新", "写入 " + BOX_KEY + "." + SERVICE_PATH);
   } else {
-    $notification.post("中国联通", "Cookie 写入失败", "请检查 BoxJS 官方 Surge 模块是否已安装并开启");
+    $notification.post("中国联通", "Cookie 写入失败", "详情见 Surge 脚本日志");
   }
 
   // http-request 脚本必须透传请求本体，否则会打断联通 App 正常请求
