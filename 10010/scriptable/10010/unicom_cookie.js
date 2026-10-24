@@ -3,15 +3,17 @@
 //
 // 模块分类 · 背景
 // - 联通 App 新版登录态 Cookie 主要分发在 mxx.client.10010.com
-// - 本脚本从该域任意请求头里抓取完整 Cookie，写入 Surge persistentStore
-//   的 `ComponentService` 根 key（与 BoxJS 的 #ComponentService 持久化键同名）
-// - Scripting 小组件（中国联通-小组件修改）通过 BoxJS
-//   /query/data/ComponentService 读取 ChinaUnicom.Settings.Cookie
+// - 小组件（中国联通-小组件修改）通过 BoxJS HTTP API 读取 Cookie：
+//     GET  https://boxjs.com/query/data/ComponentService
+//     →   { key, val }  →  val.ChinaUnicom.Settings.Cookie
+// - 因此本脚本必须写到同一个 BoxJS 持久化位置，否则小组件读不到
+//   （BoxJS 的 setdata 会把 `ComponentService` 作为根 key 持久化，
+//     子路径 ChinaUnicom.Settings.Cookie 存在同一个 JSON 里）
 //
 // 模块分类 · 目标
 // - 抓到的 Cookie 必须包含 ecs_token（登录态判据）
+// - 写入路径与小组件读取路径严格一致，实现全自动同步
 // - 与已有值做去重，避免每次请求都触发一次系统通知
-// - 只写 ChinaUnicom.Settings.Cookie，不动同一 key 下的其他服务
 //
 // 模块分类 · 使用方式
 // - Surge → 脚本 → 新建 → 类型选「HTTP Request」
@@ -23,9 +25,12 @@
 // - 任何异常都只 console.log，不阻塞请求（$done({}) 透传）
 // =====================================================================
 
-const BOX_ROOT_KEY = "ComponentService"; // Surge $persistentStore 的 key
-const SERVICE_KEY = "ChinaUnicom";
+const BOX_KEY = "ComponentService";          // BoxJS 持久化根 key
+const SERVICE_PATH = "ChinaUnicom.Settings.Cookie"; // 子路径
 const LOGIN_TOKEN_RE = /(?:^|;)\s*ecs_token\s*=[^;\s]+/;
+
+// BoxJS 地址（与小组件 settings.boxJsUrl 默认值一致）
+const BOXJS_BASE = "https://boxjs.com";
 
 /** 从请求头里取 Cookie（大小写不敏感） */
 function readRequestCookie(request) {
@@ -45,38 +50,69 @@ function summarize(cookie) {
   return "len=" + cookie.length + " keys=" + keys.length + " 已含=[" + present.join(",") + "]";
 }
 
-/** 读出已持久化的 BoxJS 根对象 */
-function readBoxRoot() {
-  try {
-    const raw = $persistentStore.read(BOX_ROOT_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
-  } catch (e) {
-    console.log("⚠️ 联通CK | BoxJS 根对象解析失败，按空对象重写：" + String(e));
-    return {};
-  }
+/** 读取 BoxJS 中已存的 Cookie（走 /query/data，与小组件同路径） */
+function readBoxJsCookie() {
+  return new Promise((resolve) => {
+    $httpClient.get(
+      {
+        url: BOXJS_BASE + "/query/data/" + encodeURIComponent(BOX_KEY),
+        headers: { Accept: "application/json" },
+        timeout: 10,
+      },
+      (err, resp, body) => {
+        if (err || !body) {
+          resolve("");
+          return;
+        }
+        try {
+          const data = JSON.parse(body);
+          let root = data && data.val;
+          if (typeof root === "string") root = JSON.parse(root);
+          const cookie = root && root.ChinaUnicom && root.ChinaUnicom.Settings
+            ? String(root.ChinaUnicom.Settings.Cookie || "")
+            : "";
+          resolve(cookie.trim());
+        } catch (e) {
+          console.log("⚠️ 联通CK | 读取 BoxJS 解析失败：" + String(e));
+          resolve("");
+        }
+      }
+    );
+  });
 }
 
-/** 写回 BoxJS 根对象，只更新 ChinaUnicom.Settings.Cookie */
-let lastCookie = "";
-
-function writeBoxRoot(root) {
-  if (!root[SERVICE_KEY] || typeof root[SERVICE_KEY] !== "object") root[SERVICE_KEY] = {};
-  if (!root[SERVICE_KEY].Settings || typeof root[SERVICE_KEY].Settings !== "object") {
-    root[SERVICE_KEY].Settings = {};
-  }
-  root[SERVICE_KEY].Settings.Cookie = lastCookie;
-  $persistentStore.write(JSON.stringify(root), BOX_ROOT_KEY);
+/** 写入 Cookie 到 BoxJS（POST /api/saveData，body {key, val}） */
+function writeBoxJsCookie(cookie) {
+  return new Promise((resolve) => {
+    const payload = JSON.stringify({ key: BOX_KEY, val: cookie });
+    $httpClient.post(
+      {
+        url: BOXJS_BASE + "/api/saveData",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: payload,
+        timeout: 10,
+      },
+      (err, resp, body) => {
+        if (err) {
+          console.log("⚠️ 联通CK | 写入 BoxJS 失败：" + String(err));
+          resolve(false);
+          return;
+        }
+        console.log("✅ 联通CK | 已写入 " + BOX_KEY + "." + SERVICE_PATH + " | " + summarize(cookie));
+        resolve(true);
+      }
+    );
+  });
 }
 
-function main() {
+function notify(title, subtitle, content) {
+  $notification.post(title, subtitle, content);
+}
+
+async function main() {
   // 手动触发 / 编辑器运行：没有请求上下文，只报告状态
   if (typeof $request === "undefined") {
-    const existing = readBoxRoot();
-    const current = existing[SERVICE_KEY] && existing[SERVICE_KEY].Settings
-      ? String(existing[SERVICE_KEY].Settings.Cookie || "")
-      : "";
+    const current = await readBoxJsCookie();
     console.log(
       current
         ? "ℹ️ 联通CK | 手动运行 | 已有 Cookie：" + summarize(current)
@@ -100,26 +136,19 @@ function main() {
     return;
   }
 
-  const root = readBoxRoot();
-  const current = root[SERVICE_KEY] && root[SERVICE_KEY].Settings
-    ? String(root[SERVICE_KEY].Settings.Cookie || "")
-    : "";
-
+  const current = await readBoxJsCookie();
   if (current === cookie) {
     // 值未变化：静默透传，避免每次请求都弹通知
     $done({});
     return;
   }
 
-  lastCookie = cookie;
-  writeBoxRoot(root);
-  console.log("✅ 联通CK | 已写入 " + BOX_ROOT_KEY + "." + SERVICE_KEY + ".Settings.Cookie | " + summarize(cookie));
-
-  $notification.post(
-    "中国联通",
-    "Cookie 已更新",
-    "写入 " + BOX_ROOT_KEY + "." + SERVICE_KEY + ".Settings.Cookie"
-  );
+  const ok = await writeBoxJsCookie(cookie);
+  if (ok) {
+    notify("中国联通", "Cookie 已更新", "写入 " + BOX_KEY + "." + SERVICE_PATH);
+  } else {
+    notify("中国联通", "Cookie 写入失败", "请检查网络或 BoxJS 地址");
+  }
 
   // http-request 脚本必须透传请求本体，否则会打断联通 App 正常请求
   $done({});
