@@ -1,13 +1,10 @@
 #!name=中国联通组件服务
-#!desc=从联通 App 抓取含 ecs_token 的完整 Cookie，写入 ComponentService，供 Scripting 联通小组件读取
+#!desc=从联通 App 抓取含 ecs_token 的完整 Cookie，直写 Surge 持久化存储 ComponentService.ChinaUnicom.Settings.Cookie，供 Scripting 联通小组件读取
 #!category=Alwaysbesideyou
 #!author=Alwaysbesideyou
-
-[General]
-force-http-engine-hosts = %APPEND% boxjs.com, boxjs.net
 
 [Script]
 联通组件Cookie = type=http-request, pattern=^https:\/\/mxx\.client\.10010\.com(?::443)?\/(servicequerybusiness|serviceimportantbusiness)\/(.+), script-path=https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/master/10010/scriptable/10010/unicom_cookie.js, script-update-interval=86400, timeout=20
 
 [MITM]
-hostname = %APPEND% boxjs.com, boxjs.net, m.client.10010.com, mxx.client.10010.com
+hostname = %APPEND% m.client.10010.com, mxx.client.10010.com
