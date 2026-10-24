@@ -1,17 +1,5 @@
 #!name=中国联通组件服务
-#!desc=从联通 App 的 mxx.client.10010.com 请求抓取含 ecs_token 的完整 Cookie，写入 Surge 持久化键 ComponentService（BoxJS 兼容），供「中国联通-小组件修改」小组件读取。
-#!category=组件服务
-#!author=ByteValley
-#!system=iOS,iPadOS,macOS
-
-# ---------------------------------------------------------------
-# 说明
-# - 触发路径：联通 App 内打开「余量查询」页，会请求
-#   /servicequerybusiness/operationservice/ 下的一系列接口
-# - 只匹配 servicequerybusiness 前缀：登录后必然触发，且不会命中静态资源
-# - 判据：Cookie 必须含 ecs_token，避免写入未登录空 session
-# - MITM：m.client.10010.com 与 mxx.client.10010.com 都要解密
-# ---------------------------------------------------------------
+#!desc=从联通 App 抓取含 ecs_token 的完整 Cookie，写入 ComponentService，供 Scripting 联通小组件读取
 
 [Script]
 联通组件Cookie = type=http-request, pattern=^https:\/\/mxx\.client\.10010\.com(?::443)?\/servicequerybusiness\/(.+), script-path=https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/master/10010/scriptable/10010/unicom_cookie.js, script-update-interval=0, timeout=10
