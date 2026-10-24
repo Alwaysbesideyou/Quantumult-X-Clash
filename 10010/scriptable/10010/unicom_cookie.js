@@ -12,6 +12,14 @@
 //   ComponentService 根 key 下同时存放 12123 / ChinaUnicom / ChinaBroadnet / SGCC
 //   等多个服务，写入时必须整读→改字段→整写，不能直接覆盖
 //
+// 模块分类 · 关键实现细节
+// - boxjs.com 不是真实服务器，必须由 BoxJS 官方 Surge 模块的 rewrite 接管
+// - Surge 脚本内发起的 $httpClient 请求，默认会被 Surge 判定为"脚本自身
+//   发出的请求"而跳过 rewrite；必须显式带
+//   X-Surge-Skip-Scripting: false 才会重新进入 rewrite 流程
+//   （BoxJS 官方 EnvJs 的 isNeedRewrite 机制就是这么做的）
+// - 因此模块的 [MITM] 必须包含 boxjs.com / boxjs.net
+//
 // 模块分类 · 目标
 // - 抓到的 Cookie 必须包含 ecs_token（登录态判据）
 // - 写入路径与小组件读取路径严格一致，实现全自动同步
@@ -30,8 +38,7 @@
 //       带 JSESSIONID + serviceimportantbusiness（登录态最全的组合）
 //
 // 模块分类 · 前置条件
-// - 必须安装 BoxJS 官方 Surge 模块，否则 boxjs.com 的请求不会交给
-//   BoxJS 脚本处理，/api/saveData 会返回 HTML 页面而非 JSON
+// - 必须安装 BoxJS 官方 Surge 模块（提供 boxjs.com 的 rewrite 处理）
 //   https://raw.githubusercontent.com/chavyleung/scripts/master/box/rewrite/boxjs.rewrite.surge.sgmodule
 //
 // 模块分类 · 日志与边界
@@ -43,8 +50,15 @@ const BOX_KEY = "ComponentService";                  // BoxJS 持久化根 key
 const SERVICE_PATH = "ChinaUnicom.Settings.Cookie"; // 子路径
 const LOGIN_TOKEN_RE = /(?:^|;)\s*ecs_token\s*=[^;\s]+/;
 
-// BoxJS 域名主备（小组件默认读 boxjs.com，写入也用同一域名才能落到同一份数据）
+// BoxJS 域名主备（小组件默认读 boxjs.com，写入也必须用同一域名才落到同一份数据）
 const BOXJS_BASES = ["https://boxjs.com", "https://boxjs.net"];
+
+// 关键：让脚本自身发起的请求重新进入 Surge rewrite 流程
+// 否则 boxjs.com 的请求不会交给 BoxJS 脚本处理
+const REWRITE_HEADERS = {
+  "X-Surge-Skip-Scripting": "false",
+  Accept: "application/json",
+};
 
 /** 从请求头里取 Cookie（大小写不敏感） */
 function readRequestCookie(request) {
@@ -72,7 +86,7 @@ function bodySnippet(body) {
 
 /**
  * 读取 BoxJS 的 ComponentService 根对象
- * 返回 { root, cookie, base }：root 是完整对象（用于整写时保留其他服务）
+ * 返回 { root, cookie }：root 是完整对象（用于整写时保留其他服务）
  */
 async function readBoxRoot() {
   for (const base of BOXJS_BASES) {
@@ -80,7 +94,7 @@ async function readBoxRoot() {
       $httpClient.get(
         {
           url: base + "/query/data/" + encodeURIComponent(BOX_KEY),
-          headers: { Accept: "application/json" },
+          headers: Object.assign({}, REWRITE_HEADERS),
           timeout: 15,
         },
         (err, resp, body) => {
@@ -129,7 +143,9 @@ async function writeBoxCookie(root) {
       $httpClient.post(
         {
           url: base + "/api/saveData",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          headers: Object.assign({}, REWRITE_HEADERS, {
+            "Content-Type": "application/json",
+          }),
           body: payload,
           timeout: 15,
         },
@@ -206,7 +222,7 @@ async function main() {
   if (ok) {
     $notification.post("中国联通", "Cookie 已更新", "写入 " + BOX_KEY + "." + SERVICE_PATH);
   } else {
-    $notification.post("中国联通", "Cookie 写入失败", "请检查是否已安装 BoxJS 官方 Surge 模块");
+    $notification.post("中国联通", "Cookie 写入失败", "请检查 BoxJS 官方 Surge 模块是否已安装并开启");
   }
 
   // http-request 脚本必须透传请求本体，否则会打断联通 App 正常请求
