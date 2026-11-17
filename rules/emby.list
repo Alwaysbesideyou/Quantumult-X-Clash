@@ -1,0 +1,9 @@
+# 用途：Emby 公益服直连规则 — Loon 订阅格式（两段式，策略写在订阅行）
+# 订阅行：<本文件 URL>,policy=DIRECT,enabled=true
+# 维护：增减直接跟 Hermes 说
+# 更新：2026-11-17
+DOMAIN,c.emby.wtf
+DOMAIN-SUFFIX,wenjian.de
+DOMAIN,goemby.entertang.work
+DOMAIN,cf.sfcj.org
+DOMAIN,random.ouonet.org

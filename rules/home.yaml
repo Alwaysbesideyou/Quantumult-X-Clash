@@ -1,0 +1,19 @@
+# 用途：家庭服务【外网】直连规则 — Clash rule-provider（behavior: classical，两段式，策略在 RULE-SET 行指定）
+# 覆盖：7666665.xyz 的外网服务（CF Pages/Workers + Azure VPS）+ VPS 机器域名，全部 DIRECT
+# 不含：内网服务（ha./nas./i. 等）→ 由泛域名 backHome 兜底；CF Tunnel（hac/bwc/nasc/subc）与 tmp-mail 已弃用；sy/v2/wg 归泛域名
+# 维护：增减直接跟 Hermes 说，由 GitHub MCP 直改本文件
+# 更新：2026-11-17
+payload:
+  # CF Pages / Workers
+  - DOMAIN-SUFFIX,deck.7666665.xyz
+  - DOMAIN-SUFFIX,gh.7666665.xyz
+  - DOMAIN-SUFFIX,map.7666665.xyz
+  - DOMAIN,gemini.7666665.xyz
+  # Azure VPS（SNI 分流的服务 + 机器域名）
+  - DOMAIN-SUFFIX,decky.7666665.xyz
+  - DOMAIN-SUFFIX,github.7666665.xyz
+  - DOMAIN-SUFFIX,oneapi.7666665.xyz
+  - DOMAIN-SUFFIX,frps.7666665.xyz
+  - DOMAIN-SUFFIX,wb.7666665.xyz
+  - DOMAIN-SUFFIX,agent.7666665.xyz
+  - DOMAIN,sudiehk.eastasia.cloudapp.azure.com

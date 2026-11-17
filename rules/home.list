@@ -1,0 +1,16 @@
+# 用途：家庭服务【外网】直连规则 — Loon 订阅格式（两段式，策略写在订阅行）
+# 订阅行：<本文件 URL>,policy=DIRECT,enabled=true
+# 不含：内网服务（泛域名 backHome 兜底）；CF Tunnel 与 tmp-mail 已弃用；sy/v2/wg 归泛域名
+# 维护：增减直接跟 Hermes 说
+# 更新：2026-11-17
+DOMAIN-SUFFIX,deck.7666665.xyz
+DOMAIN-SUFFIX,gh.7666665.xyz
+DOMAIN-SUFFIX,map.7666665.xyz
+DOMAIN,gemini.7666665.xyz
+DOMAIN-SUFFIX,decky.7666665.xyz
+DOMAIN-SUFFIX,github.7666665.xyz
+DOMAIN-SUFFIX,oneapi.7666665.xyz
+DOMAIN-SUFFIX,frps.7666665.xyz
+DOMAIN-SUFFIX,wb.7666665.xyz
+DOMAIN-SUFFIX,agent.7666665.xyz
+DOMAIN,sudiehk.eastasia.cloudapp.azure.com

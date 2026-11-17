@@ -1,0 +1,10 @@
+# 用途：Emby 公益服直连规则 — Clash rule-provider（behavior: classical，两段式，策略在 RULE-SET 行指定）
+# 覆盖：终点站/稳健服(含弹幕API)/ETFLIX/飞越/ouo，全部 DIRECT
+# 维护：增减直接跟 Hermes 说，由 GitHub MCP 直改本文件
+# 更新：2026-11-17
+payload:
+  - DOMAIN,c.emby.wtf
+  - DOMAIN-SUFFIX,wenjian.de
+  - DOMAIN,goemby.entertang.work
+  - DOMAIN,cf.sfcj.org
+  - DOMAIN,random.ouonet.org
