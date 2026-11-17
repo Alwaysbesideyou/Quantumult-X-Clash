@@ -1,19 +1,17 @@
 # 用途：家庭服务【外网】直连规则 — Clash rule-provider（behavior: classical，两段式，策略在 RULE-SET 行指定）
 # 覆盖：7666665.xyz 的外网服务（CF Pages/Workers + Azure VPS）+ VPS 机器域名，全部 DIRECT
-# 原则：本地优先——本地 nginx 有映射的名字（wb/sub/ha/nas/i. 等）不进本清单，由泛域名 backHome 兜底
-# 不含：CF Tunnel（hac/bwc/nasc/subc）与 tmp-mail 已弃用；sy/v2/wg 是节点域名，不入规则
+# 原则：①本地优先——本地 nginx 有映射的名字不进本清单 ②实测存活——证书日志只当候选，实测不通/无服务的一律不进
+# 已验证（2026-11-17 实测）：gh/map/gemini/oneapi/frps 活；deck 待确认（根路径 404）
+# 已剔除：wb/sub 等本地服务、CF Tunnel（hac/bwc/nasc/subc）、tmp-mail、空壳（decky/github/agent）、节点（sy/v2/wg）
 # 维护：增减直接跟 Hermes 说，由 GitHub MCP 直改本文件
-# 更新：2026-11-17
 payload:
-  # CF Pages / Workers
-  - DOMAIN-SUFFIX,deck.7666665.xyz
+  # CF Pages / Workers（实测存活）
   - DOMAIN-SUFFIX,gh.7666665.xyz
   - DOMAIN-SUFFIX,map.7666665.xyz
   - DOMAIN,gemini.7666665.xyz
-  # Azure VPS（SNI 分流的服务 + 机器域名）
-  - DOMAIN-SUFFIX,decky.7666665.xyz
-  - DOMAIN-SUFFIX,github.7666665.xyz
+  # 待确认（根路径 404，疑似未部署）
+  - DOMAIN-SUFFIX,deck.7666665.xyz
+  # Azure VPS（实测存活）
   - DOMAIN-SUFFIX,oneapi.7666665.xyz
   - DOMAIN-SUFFIX,frps.7666665.xyz
-  - DOMAIN-SUFFIX,agent.7666665.xyz
   - DOMAIN,sudiehk.eastasia.cloudapp.azure.com
