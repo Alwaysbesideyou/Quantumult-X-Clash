@@ -1,0 +1,13 @@
+#!name=京粉自返利转链
+#!desc=京东APP自动抓CK+商品页京粉转链，通知点击跳回商品页
+#!system=ios
+
+[Script]
+# 用途：从京东APP签到请求头里抓 pt_key/pt_pin（本地存储，不外传）
+http-request ^https://api\.m\.jd\.com/client\.action\?functionId=signBean(Index|GroupStageIndex) script-path=https://cdn.jsdelivr.net/gh/Alwaysbesideyou/Quantumult-X-Clash@main/loon/jd-jingfen/jd_jingfen_convert.js, tag=京东CK捕获
+
+# 用途：商品页响应里抽分享链接→京粉转链→弹通知；serverConfig/basicConfig 顺带清 httpdns 防绕过 MITM
+http-response ^https?://api\.m\.jd\.com/(client\.action|api)\?functionId=(wareBusiness|serverConfig|basicConfig|lite_wareBusiness|pingou_item) script-path=https://cdn.jsdelivr.net/gh/Alwaysbesideyou/Quantumult-X-Clash@main/loon/jd-jingfen/jd_jingfen_convert.js, requires-body=true, timeout=15, tag=京粉转链
+
+[MITM]
+hostname = api.m.jd.com
