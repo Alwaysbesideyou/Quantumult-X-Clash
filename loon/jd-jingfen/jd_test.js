@@ -1,7 +1,12 @@
-// 用途：链路诊断——只弹通知，不动任何请求/响应；A=请求链路命中，B=商品页规则命中
+// 用途：链路诊断 v2——弹通知标注「请求/响应 + 有无body」，不动任何请求/响应
+const hasBody =
+  typeof $response !== "undefined" && typeof $response.body === "string" && $response.body.length > 0;
 $notification.post(
   "JD诊断命中✓",
   "",
-  (typeof $response === "undefined" ? "A请求链路" : "B商品页规则") + " | " + $request.url.slice(0, 80)
+  (typeof $response === "undefined" ? "REQ" : "RESP") +
+    (hasBody ? "有body" : "无body") +
+    " | " +
+    $request.url.slice(0, 110)
 );
-$done({}); // http-request/http-response 都原样放行
+$done({}); // 原样放行
