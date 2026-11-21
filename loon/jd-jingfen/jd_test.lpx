@@ -1,0 +1,13 @@
+#!name=JD链路诊断（临时）
+#!desc=诊断京粉转链插件不触发：命中 api.m.jd.com 即弹通知，用完即删
+#!system=ios
+
+[Script]
+# 用途：诊断A——任何 api.m.jd.com 请求命中就弹通知，验证拦截链路
+http-request ^https?://api\.m\.jd\.com/ script-path=https://cdn.jsdelivr.net/gh/Alwaysbesideyou/Quantumult-X-Clash@main/loon/jd-jingfen/jd_test.js, tag=诊断A-请求链路
+
+# 用途：诊断B——与正式插件完全相同的匹配（去掉 timeout 参数），验证规则本身
+http-response ^https?://api\.m\.jd\.com/(client\.action|api)\?functionId=(wareBusiness|serverConfig|basicConfig|lite_wareBusiness|pingou_item) script-path=https://cdn.jsdelivr.net/gh/Alwaysbesideyou/Quantumult-X-Clash@main/loon/jd-jingfen/jd_test.js, requires-body=true, tag=诊断B-商品页规则
+
+[MITM]
+hostname = api.m.jd.com
