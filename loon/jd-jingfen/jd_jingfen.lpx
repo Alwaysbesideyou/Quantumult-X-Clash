@@ -2,6 +2,13 @@
 #!desc=京东APP自动抓CK+进商品页自动京粉转链，通知点击跳回商品页
 #!system=ios
 
+# 用途：插件页面设置项（Loon Build 733+ 的 [Argument]，官方文档 loon0x00.github.io/docs/Plugin）
+# 修改原因(2026-11-22#4): 用户要求「重复通知」做成插件设置——dedup_min 分钟数可改，0=每次都弹；
+#   debug_ping 是调试心跳开关（链路已验证，默认关，排障时再开）
+[Argument]
+dedup_min = input,10,type=number,tag=重复通知冷却(分钟),desc=同一商品在该时间内只弹一次；填 0 则每次都弹（同一商品页可能触发多次，会连弹）
+debug_ping = switch,false,type=boolean,tag=调试心跳通知,desc=打开后目标接口会弹链路心跳，仅排障时开启
+
 [Script]
 # 用途：api.m.jd.com 请求——脚本内按 functionId 分流：抓 pt_key/pt_pin（只存本地，不外传）；
 #       商品接口弹请求心跳；wareDetailAsyncFloors 请求体带明文 skuId → 直接转链
@@ -9,17 +16,17 @@
 #   宽泛规则 A/C 稳定弹，B2/B3 与原插件两条查询正则全部静默），规则只做宽泛匹配，目标判定移到脚本内
 # 修改原因(2026-11-22#3): 加 requires-body=true——楼层触发线要读 $request.body 提 skuId，
 #   Loon 请求侧脚本不加此 flag 拿不到请求体（响应侧实测可不加，请求侧别赌），v4 楼层线因此静默
-http-request ^https?://api\.m\.jd\.com/ script-path=https://cdn.jsdelivr.net/gh/Alwaysbesideyou/Quantumult-X-Clash@main/loon/jd-jingfen/jd_jingfen_convert.js, requires-body=true, tag=京粉转链
+http-request ^https?://api\.m\.jd\.com/ script-path=https://cdn.jsdelivr.net/gh/Alwaysbesideyou/Quantumult-X-Clash@main/loon/jd-jingfen/jd_jingfen_convert.js, requires-body=true, tag=京粉转链, argument=[{dedup_min},{debug_ping}]
 
 # 用途：api.m.jd.com 响应——商品页抽分享链接→京粉转链→弹通知；serverConfig/basicConfig 清 httpdns
 #       防绕过 MITM；其余静默放行
 # 修改原因(2026-11-22): 同上换宽泛正则；不带 requires-body/timeout——诊断 C（无 flag 无 timeout）实证 $response.body 可读
-http-response ^https?://api\.m\.jd\.com/ script-path=https://cdn.jsdelivr.net/gh/Alwaysbesideyou/Quantumult-X-Clash@main/loon/jd-jingfen/jd_jingfen_convert.js, tag=京粉转链
+http-response ^https?://api\.m\.jd\.com/ script-path=https://cdn.jsdelivr.net/gh/Alwaysbesideyou/Quantumult-X-Clash@main/loon/jd-jingfen/jd_jingfen_convert.js, tag=京粉转链, argument=[{dedup_min},{debug_ping}]
 
 # 用途：京东商品详情页 in.m.jd.com/product/graphext/<sku>.html 的响应——sku 直接取自 URL，转链弹通知
 # 修改原因(2026-11-22#2): 参考 wf021325/qx 的 jd_price 插件——它「只在进商品页时弹」且在你设备上实测有效，
 #   触发点就是这个纯路径 URL（不带查询段，避开了查询段正则不触发的坑）；MITM 同步加 in.m.jd.com
-http-response ^https?://in\.m\.jd\.com/product/graphext/\d+\.html script-path=https://cdn.jsdelivr.net/gh/Alwaysbesideyou/Quantumult-X-Clash@main/loon/jd-jingfen/jd_jingfen_convert.js, tag=京粉转链-详情页
+http-response ^https?://in\.m\.jd\.com/product/graphext/\d+\.html script-path=https://cdn.jsdelivr.net/gh/Alwaysbesideyou/Quantumult-X-Clash@main/loon/jd-jingfen/jd_jingfen_convert.js, tag=京粉转链-详情页, argument=[{dedup_min},{debug_ping}]
 
 [MITM]
 hostname = api.m.jd.com, in.m.jd.com
