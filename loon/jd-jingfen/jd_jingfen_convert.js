@@ -5,6 +5,10 @@
  *   `if (!isQuanX) 放行` 提前退出，本脚本按 Loon 原生 API 重写两条路径：
  *   1) http-request：从 api.m.jd.com 请求头 Cookie 提取 pt_key/pt_pin 存入本地（有效期约90天）
  *   2) http-response：商品页接口响应里抽 shareUrl → 调京粉 ConvertSuperLink 转链 → 弹通知
+ * 修改原因(2026-11-22#2): 真机实测 api.m.jd.com 的 wareBusiness 始终没进脚本（大量运行记录全是
+ *   readCustomSurfaceList 等非目标接口），进商品页零通知。参考 wf021325/qx 的 jd_price 插件
+ *   （只带路径正则、在你设备上稳弹）补两条触发线：详情页 in.m.jd.com/product/graphext/<sku>.html
+ *   （响应侧）与 wareDetailAsyncFloors（请求体明文 skuId）。三条线共用 publish() 出口，sku 去重。
  * 隐私：CK 只存 Loon $persistentStore，不上传任何第三方；转链请求直发 api.m.jd.com。
  * 注意：自推自买违反京东联盟规则，低频自用风险自担。
  *
@@ -42,6 +46,13 @@ const url = $request.url;
 //   避免 body 参数里编码的字符串造成误判（编码后是 %3D 不会命中）。
 const RE_PRODUCT = /[?&]functionId=(wareBusiness|lite_wareBusiness|pingou_item)(?:&|$)/;
 const RE_CONFIG = /[?&]functionId=(serverConfig|basicConfig)(?:&|$)/;
+// 修改原因(2026-11-22#2): 参考 wf021325/qx 的 jd_price 插件——它「只在进商品页时弹」且在你设备上实测有效，
+//   触发点是 in.m.jd.com/product/graphext/<sku>.html（纯路径正则、无查询段）。据此补两条触发线：
+//   ① 详情页页面 in.m.jd.com/product/graphext/<sku>.html（响应侧，sku 就在 URL 路径里）
+//   ② wareDetailAsyncFloors 请求体是明文 JSON、自带 skuId（wareBusiness 请求体是 ciphertype:5 加密，
+//      只能从响应抽 shareUrl），作为「进商品页」的第二触发点
+const RE_GRAPH = /^https?:\/\/in\.m\.jd\.com\/product\/graphext\/(\d+)\.html(?:[/?#]|$)/;
+const RE_FLOORS = /[?&]functionId=(wareDetailAsyncFloors|lite_wareDetailAsyncFloors)(?:&|$)/;
 
 // ---------- 工具 ----------
 function readCk(headers) {
@@ -123,6 +134,84 @@ function skuOf(u) {
   return m ? m[1] : "";
 }
 
+// 修改原因(2026-11-22#2): 从 wareDetailAsyncFloors 的 POST body 取 skuId——该接口 body 是明文 JSON
+//   （{"skuId":"100069476020",...}）；兼容表单形态 functionId=...&body=<urlencode(JSON)> 再解一层
+function skuFromBody(b) {
+  if (!b) return "";
+  let s = "";
+  try {
+    s = decodeURIComponent(b.replace(/\+/g, " "));
+  } catch (e) {
+    s = b;
+  }
+  let t = s;
+  const mb = s.match(/[?&]body=([^&]+)/);
+  if (mb) {
+    try {
+      t = decodeURIComponent(mb[1]);
+    } catch (e) {}
+  }
+  const m =
+    t.match(/"skuId"\s*:\s*"?(\d+)/) ||
+    t.match(/[?&]skuId=(\d+)/) ||
+    t.match(/"wareId"\s*:\s*"?(\d+)/) ||
+    t.match(/[?&]wareId=(\d+)/);
+  return m ? m[1] : "";
+}
+
+function itemUrlOf(sku) {
+  // 标准商品链接：老抓包用同款链接当 materialInfo 转链成功（code=200 有 promotionUrl）
+  return "https://item.m.jd.com/product/" + sku + ".html";
+}
+
+// 修改原因(2026-11-22#2): 商品页/详情页/楼层三条触发线共用的统一出口——去重 → 转链 → 通知；
+//   onDone 用于调用方收口（响应侧传 finish，请求侧传 null）
+// 修改原因(2026-11-22#2审阅): 去重从「单条 last 记录」改为按 SKU 的 map——旧版在 A→B→A 场景
+//   会把 A 再弹一次；map 只保留最近 30 条、自动清过期项，避免存储膨胀
+function isDupAndMark(dedupId) {
+  if (!dedupId) return false;
+  try {
+    const now = Date.now();
+    const ttl = DEDUP_MINUTES * 60000;
+    let m = JSON.parse($persistentStore.read(DEDUP_KEY) || "{}");
+    if (m && m.id !== undefined) {
+      // 兼容旧版 {id, ts} 单条格式
+      const legacy = m;
+      m = {};
+      if (legacy.id) m[legacy.id] = legacy.ts;
+    }
+    // 修改原因(2026-11-22#2审阅): 存储被损坏成数组时，纯数字 SKU 会变数组下标（JSON 膨胀且丢标记）——强制重置
+    if (!m || typeof m !== "object" || Array.isArray(m)) m = {};
+    for (const k in m) if (!(now - m[k] < ttl)) delete m[k];
+    if (m[dedupId]) return true;
+    m[dedupId] = now;
+    const keys = Object.keys(m).sort((a, b) => m[a] - m[b]);
+    while (keys.length > 30) delete m[keys.shift()];
+    $persistentStore.write(JSON.stringify(m), DEDUP_KEY);
+    return false;
+  } catch (e) {
+    return false;
+  }
+}
+
+function publish(shareUrl, sku, onDone) {
+  const dedupId = sku || shareUrl;
+  // 修改原因(2026-11-21审阅): 转链前就写冷却——失败/无返利/无CK 的通知同样去重，并发响应不会全部穿透
+  if (isDupAndMark(dedupId)) {
+    if (onDone) onDone();
+    return;
+  }
+  convert(shareUrl, (r) => {
+    try {
+      notify("京粉转链", r.msg, r.link ? jumpScheme(r.link) : "");
+    } catch (e) {
+      console.log("jd_jingfen notify error: " + String(e));
+    } finally {
+      if (onDone) onDone();
+    }
+  });
+}
+
 // ---------- 转链 ----------
 function convert(shareUrl, cb) {
   const ck = $persistentStore.read(CK_KEY) || "";
@@ -199,13 +288,35 @@ if (typeof $response === "undefined") {
   // 路径 1：请求——只有目标接口才动手
   // 修改原因(2026-11-22审阅): 非目标流量零通知零改动——抓 CK 也收敛到目标接口
   //   （商品/配置请求都带 Cookie，抓取时机不受影响），避免任意 JD 流量触发写库+弹窗
-  if (RE_PRODUCT.test(url) || RE_CONFIG.test(url)) {
+  // 修改原因(2026-11-22#2): 命中面加上 RE_FLOORS（进商品页的明文 sku 来源）
+  if (RE_PRODUCT.test(url) || RE_CONFIG.test(url) || RE_FLOORS.test(url)) {
     try {
       saveCkIfNew();
     } catch (e) {} // 修改原因(2026-11-21): 抓 CK 出错也不能断连
     // 修改原因(2026-11-22): 目标商品接口弹请求心跳（证明请求侧规则+脚本执行通），其余静默
     if (DEBUG_PING && RE_PRODUCT.test(url)) {
       diagNotify("京粉转链｜心跳REQ", "请求侧链路通✓ " + url.slice(0, 60), DIAG_KEY_REQ);
+    }
+  }
+
+  // 修改原因(2026-11-22#2): 进商品页第二触发点——wareDetailAsyncFloors 请求体带明文 skuId。
+  //   先 $done 放行再异步转链：楼层请求不被转链网络耗时拖慢；若 Loon 在 $done 后终止上下文，
+  //   最坏也只是这条线不出通知（页面不受影响），详情页/商品页另两条线仍有覆盖
+  if (RE_FLOORS.test(url)) {
+    const sku = skuFromBody($request.body || "");
+    if (sku) {
+      if (DEBUG_PING) diagNotify("京粉转链｜心跳楼层", "wareDetailAsyncFloors 命中✓ sku=" + sku, DIAG_KEY_REQ);
+      // 修改原因(2026-11-22#2审阅): Loon 不保证 $done 之后上下文还活着，改成转链完成再放行；
+      //   加 3 秒保底定时释放，且 released 闸门保证 $done 恰好一次，转链异常也不会挂住页面楼层
+      let released = false;
+      const release = () => {
+        if (released) return;
+        released = true;
+        $done({});
+      };
+      setTimeout(release, 3000);
+      publish(itemUrlOf(sku), sku, release);
+      return;
     }
   }
   $done({}); // 修改原因(2026-11-21审阅): Loon 无参 $done() 会断开请求，必须 {} 原样放行
@@ -222,6 +333,23 @@ if (typeof $response === "undefined") {
   };
 
   try {
+    // 修改原因(2026-11-22#2): 详情页页面——参考 jd_price 插件实证的商品页触发点（纯路径正则，最稳）。
+    //   sku 直接取自 URL；页面 HTML 若带 shareUrl 就用它，否则用 sku 拼标准商品链接去转链
+    if (RE_GRAPH.test(url)) {
+      try {
+        saveCkIfNew();
+      } catch (e) {}
+      const sku = (url.match(RE_GRAPH) || [])[1] || "";
+      const su = extractShareUrl(null, body) || (sku ? itemUrlOf(sku) : "");
+      if (DEBUG_PING) {
+        // 修改原因(2026-11-22#2): 心跳带 sku 和响应体大小——这条线一旦弹出来，转链链路就定了
+        diagNotify("京粉转链｜心跳详情页", `graphext 命中✓ sku=${sku || "?"} ${body.length}B`, DIAG_KEY_RESP);
+      }
+      if (su) publish(su, sku, finish);
+      else finish();
+      return;
+    }
+
     if (RE_CONFIG.test(url)) {
       // 修改原因(2026-11-22审阅): 抓 CK 收敛到目标接口（含本分支），非目标流量零通知零改动
       try {
@@ -288,31 +416,12 @@ if (typeof $response === "undefined") {
       );
     }
 
-    const dedupId = sku || shareUrl; // 修改原因(2026-11-21审阅): SKU 缺失时用链接兜底，保证去重生效
-    let skip = false;
-    try {
-      const last = JSON.parse($persistentStore.read(DEDUP_KEY) || "{}");
-      skip = dedupId && last.id === dedupId && Date.now() - last.ts < DEDUP_MINUTES * 60000;
-    } catch (e) {}
+    // 修改原因(2026-11-22#2): 去重/转链/通知收敛到 publish()，三条触发线共用一套出口
     if (!shareUrl) {
       diagNotify("京粉转链｜异常", "商品页响应里没找到 shareUrl（接口结构可能已变动），请截图给我", DIAG_KEY_RESP);
       finish();
-    } else if (skip) {
-      finish();
     } else {
-      // 修改原因(2026-11-21审阅): 转链前就写冷却时间——失败/无返利/无CK 的通知同样去重，
-      //   且并发响应不会全部穿透；所有结果共用 DEDUP_MINUTES 冷却
-      $persistentStore.write(JSON.stringify({ id: dedupId, ts: Date.now() }), DEDUP_KEY);
-      convert(shareUrl, (r) => {
-        // 修改原因(2026-11-21): 通知出错也要保证 $done 被调用（finally 收口）
-        try {
-          notify("京粉转链", r.msg, r.link ? jumpScheme(r.link) : "");
-        } catch (e) {
-          console.log("jd_jingfen notify error: " + String(e));
-        } finally {
-          finish();
-        }
-      });
+      publish(shareUrl, sku, finish);
     }
   } catch (e) {
     // 修改原因(2026-11-21): 未预期异常必须出声并放行，否则 APP 页面会挂、用户也看不到原因
