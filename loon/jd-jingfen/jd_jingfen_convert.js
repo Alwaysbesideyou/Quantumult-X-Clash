@@ -52,7 +52,9 @@ const RE_CONFIG = /[?&]functionId=(serverConfig|basicConfig)(?:&|$)/;
 //   ② wareDetailAsyncFloors 请求体是明文 JSON、自带 skuId（wareBusiness 请求体是 ciphertype:5 加密，
 //      只能从响应抽 shareUrl），作为「进商品页」的第二触发点
 const RE_GRAPH = /^https?:\/\/in\.m\.jd\.com\/product\/graphext\/(\d+)\.html(?:[/?#]|$)/;
-const RE_FLOORS = /[?&]functionId=(wareDetailAsyncFloors|lite_wareDetailAsyncFloors)(?:&|$)/;
+// 修改原因(2026-11-22#3): 边界放宽为 (?:^|[?&])——functionId 在 POST body 里时位于串首，
+//   原先要求前面必有 ?/& 会漏掉（回归用例 8 实测漏）；URL 侧 ?functionId= 行为不变
+const RE_FLOORS = /(?:^|[?&])functionId=(wareDetailAsyncFloors|lite_wareDetailAsyncFloors)(?:&|$)/;
 
 // ---------- 工具 ----------
 function readCk(headers) {
@@ -302,8 +304,11 @@ if (typeof $response === "undefined") {
   // 修改原因(2026-11-22#2): 进商品页第二触发点——wareDetailAsyncFloors 请求体带明文 skuId。
   //   先 $done 放行再异步转链：楼层请求不被转链网络耗时拖慢；若 Loon 在 $done 后终止上下文，
   //   最坏也只是这条线不出通知（页面不受影响），详情页/商品页另两条线仍有覆盖
-  if (RE_FLOORS.test(url)) {
-    const sku = skuFromBody($request.body || "");
+  // 修改原因(2026-11-22#3): 命中面同时查 URL 和请求体（防 functionId 放 POST body 的形态）；
+  //   读 $request.body 依赖 lpx 规则的 requires-body=true（v4 缺它导致本线静默）
+  const floorsBody = $request.body || "";
+  if (RE_FLOORS.test(url) || (floorsBody && RE_FLOORS.test(floorsBody))) {
+    const sku = skuFromBody(floorsBody || url);
     if (sku) {
       if (DEBUG_PING) diagNotify("京粉转链｜心跳楼层", "wareDetailAsyncFloors 命中✓ sku=" + sku, DIAG_KEY_REQ);
       // 修改原因(2026-11-22#2审阅): Loon 不保证 $done 之后上下文还活着，改成转链完成再放行；
@@ -318,6 +323,10 @@ if (typeof $response === "undefined") {
       publish(itemUrlOf(sku), sku, release);
       return;
     }
+    // 修改原因(2026-11-22#3): 命中目标接口却提不出 skuId 时不再静默——出一条异常通知当证据
+    diagNotify("京粉转链｜异常", "楼层请求命中但没提出 skuId（请求体为空？）：" + url.slice(0, 60), DIAG_KEY_RESP);
+    $done({});
+    return;
   }
   $done({}); // 修改原因(2026-11-21审阅): Loon 无参 $done() 会断开请求，必须 {} 原样放行
 } else {
