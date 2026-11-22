@@ -7,26 +7,41 @@
  *   2) http-response：商品页接口响应里抽 shareUrl → 调京粉 ConvertSuperLink 转链 → 弹通知
  * 隐私：CK 只存 Loon $persistentStore，不上传任何第三方；转链请求直发 api.m.jd.com。
  * 注意：自推自买违反京东联盟规则，低频自用风险自担。
+ *
+ * 修改原因(2026-11-22): 换策略重写。诊断 v2 实证：带 ?functionId= 查询段的规则在真机
+ *   从未触发（宽泛规则 A/C 稳定弹通知，B2/B3 与原插件两条查询正则全部静默），所以本版
+ *   插件规则只做宽泛匹配 ^https?://api\.m\.jd\.com/，目标接口改在脚本内按 functionId
+ *   分流；非目标流量零通知零改动（上一版诊断弹窗刷屏被吐槽，正式版严禁）。
  */
 
 // ===== 可调配置 =====
 const EXT1 = "200|100_3|";          // 京粉推广位参数（老脚本沿用值）
 const DEDUP_MINUTES = 10;           // 同一商品在该时长内不重复弹通知
 const DEBUG = false;                // true 时在 Loon 日志里打印转链原始返回
-// 修改原因(2026-11-21): 真机「什么都没弹」无法区分脚本没跑/静默路径/MITM 没拦到，
-//   加心跳定位；确认链路后改为 false 再推一版
-const DEBUG_PING = true;            // true 时商品页被拦截就弹一条心跳（诊断用，验证后关）
+// 修改原因(2026-11-22): 心跳只对目标商品接口弹（非目标静默）；确认出返点通知后改 false
+const DEBUG_PING = true;            // true 时商品页目标接口弹心跳（验证链路用，确认后关）
 const DIAG_COOLDOWN_SEC = 30;       // 心跳/异常诊断通知冷却，防一次商品页多个响应刷屏
 // ===================
 
 const CK_KEY = "jd_jf_cookie";
 const DEDUP_KEY = "jd_jf_last";
-const DIAG_KEY = "jd_jf_diag_ts";
+const DIAG_KEY = "jd_jf_diag_ts";        // 通用诊断冷却
+// 修改原因(2026-11-22): REQ/RESP 心跳分开冷却——共用一个 key 时响应心跳会被请求心跳顶掉，
+//   恰好遮住最需要验证的「响应侧」链路
+const DIAG_KEY_REQ = "jd_jf_diag_req";
+const DIAG_KEY_RESP = "jd_jf_diag_resp";
 const WX_UA =
   "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MicroMessenger/8.0.47(0x18002f2c) NetType/WIFI Language/zh_CN";
 const WX_REFERER = "https://servicewechat.com/wxf463e50cd384beda/114/page-frame.html"; // 京粉小程序
 
 const url = $request.url;
+
+// 目标接口分流
+// 修改原因(2026-11-22): 规则宽泛化后所有 api.m.jd.com 流量都进本脚本，目标判定移入脚本：
+//   非商品/配置接口一律静默放行、零通知、零改动。functionId 必须以 ? 或 & 开头锚定，
+//   避免 body 参数里编码的字符串造成误判（编码后是 %3D 不会命中）。
+const RE_PRODUCT = /[?&]functionId=(wareBusiness|lite_wareBusiness|pingou_item)(?:&|$)/;
+const RE_CONFIG = /[?&]functionId=(serverConfig|basicConfig)(?:&|$)/;
 
 // ---------- 工具 ----------
 function readCk(headers) {
@@ -55,12 +70,13 @@ function notify(title, text, openUrl) {
   else $notification.post(title, "", text);
 }
 
-function diagNotify(title, text) {
+function diagNotify(title, text, key) {
   // 修改原因(2026-11-21): 心跳/异常通知按 DIAG_COOLDOWN_SEC 冷却，一次商品页只出一条
   try {
-    const last = Number($persistentStore.read(DIAG_KEY) || "0");
+    const k = key || DIAG_KEY;
+    const last = Number($persistentStore.read(k) || "0");
     if (Date.now() - last < DIAG_COOLDOWN_SEC * 1000) return;
-    $persistentStore.write(String(Date.now()), DIAG_KEY);
+    $persistentStore.write(String(Date.now()), k);
   } catch (e) {}
   // 修改原因(2026-11-21): 通知失败不能影响响应放行——吞掉 $notification.post 异常
   try {
@@ -180,28 +196,40 @@ function convert(shareUrl, cb) {
 // ---------- 入口 ----------
 // 修改原因(2026-11-21审阅): 用 typeof 判请求路径，避免未注入 $response 时 ReferenceError
 if (typeof $response === "undefined") {
-  // 路径 1：请求头抓 CK（签到接口触发）
-  try {
-    saveCkIfNew();
-  } catch (e) {} // 修改原因(2026-11-21): 抓 CK 出错也不能断连
+  // 路径 1：请求——只有目标接口才动手
+  // 修改原因(2026-11-22审阅): 非目标流量零通知零改动——抓 CK 也收敛到目标接口
+  //   （商品/配置请求都带 Cookie，抓取时机不受影响），避免任意 JD 流量触发写库+弹窗
+  if (RE_PRODUCT.test(url) || RE_CONFIG.test(url)) {
+    try {
+      saveCkIfNew();
+    } catch (e) {} // 修改原因(2026-11-21): 抓 CK 出错也不能断连
+    // 修改原因(2026-11-22): 目标商品接口弹请求心跳（证明请求侧规则+脚本执行通），其余静默
+    if (DEBUG_PING && RE_PRODUCT.test(url)) {
+      diagNotify("京粉转链｜心跳REQ", "请求侧链路通✓ " + url.slice(0, 60), DIAG_KEY_REQ);
+    }
+  }
   $done({}); // 修改原因(2026-11-21审阅): Loon 无参 $done() 会断开请求，必须 {} 原样放行
 } else {
-  // 路径 2：商品页/配置接口响应
+  // 路径 2：响应——按 functionId 分流
   const body = typeof $response.body === "string" ? $response.body : "";
   let finished = false;
-  // 修改原因(2026-11-21): 统一收口 $done——只允许调用一次；空 body 绝不回填（{} 原样放行）
+  // 修改原因(2026-11-22): finish 一律 $done({}) 原样放行（含响应体），不回填 body；
+  //   只有 httpdns 清理路径回写改过的 body。$done 只允许调用一次。
   const finish = () => {
     if (finished) return;
     finished = true;
-    if (body) $done({ body });
-    else $done({});
+    $done({});
   };
 
   try {
-    saveCkIfNew(); // 浏览商品页时顺带补抓 CK，免专门去签到
-
-    if (url.includes("serverConfig") || url.includes("basicConfig")) {
+    if (RE_CONFIG.test(url)) {
+      // 修改原因(2026-11-22审阅): 抓 CK 收敛到目标接口（含本分支），非目标流量零通知零改动
+      try {
+        saveCkIfNew();
+      } catch (e) {}
       // 清掉 httpdns 配置，防止京东 APP 走 HTTPDNS 绕过 Loon MITM（沿用老脚本做法）
+      // 修改原因(2026-11-22): 本版响应规则未带 requires-body（诊断 C 实证不加 flag 也有 body）；
+      //   若个别 Loon 版本忽略 body 回写，本段等效原样放行，不影响转链主功能
       try {
         const obj = JSON.parse(body);
         if (obj.serverConfig) {
@@ -223,9 +251,20 @@ if (typeof $response === "undefined") {
       return;
     }
 
-    // 商品页：去重后转链弹通知，原样放行响应体
+    // 修改原因(2026-11-22): 非目标接口静默放行——宽泛规则下绝大多数流量走到这里，严禁弹通知
+    if (!RE_PRODUCT.test(url)) {
+      finish();
+      return;
+    }
+
+    // 修改原因(2026-11-22审阅): 抓 CK 收敛到目标接口——商品页请求带 Cookie，顺带补抓，免专门去签到
+    try {
+      saveCkIfNew();
+    } catch (e) {}
+
+    // 商品页：心跳 + 去重后转链弹通知，响应体原样放行
     if (!body) {
-      diagNotify("京粉转链｜异常", "脚本已拦截商品页，但响应体为空（可能超 Loon 体积限制）");
+      diagNotify("京粉转链｜异常", "商品页响应体为空（疑似被 Loon 限制跳过）：" + url.slice(0, 80), DIAG_KEY_RESP);
       finish();
       return;
     }
@@ -241,9 +280,11 @@ if (typeof $response === "undefined") {
 
     if (DEBUG_PING) {
       // 修改原因(2026-11-21): 心跳定位——只要弹出来就证明 Loon 拦截+脚本执行链路通
+      // 修改原因(2026-11-22): 心跳带 RESP 标记与响应体大小，和请求心跳配对看链路
       diagNotify(
-        "京粉转链｜心跳",
-        `脚本已运行✓ 响应体${body.length}B，JSON${parseOk ? "✓" : "✗"}，shareUrl${shareUrl ? "✓" : "✗"}`
+        "京粉转链｜心跳RESP",
+        `响应侧链路通✓ ${body.length}B，JSON${parseOk ? "✓" : "✗"}，shareUrl${shareUrl ? "✓" : "✗"}`,
+        DIAG_KEY_RESP
       );
     }
 
@@ -254,7 +295,7 @@ if (typeof $response === "undefined") {
       skip = dedupId && last.id === dedupId && Date.now() - last.ts < DEDUP_MINUTES * 60000;
     } catch (e) {}
     if (!shareUrl) {
-      diagNotify("京粉转链｜异常", "商品页响应里没找到 shareUrl（接口结构可能已变动），请截图给我");
+      diagNotify("京粉转链｜异常", "商品页响应里没找到 shareUrl（接口结构可能已变动），请截图给我", DIAG_KEY_RESP);
       finish();
     } else if (skip) {
       finish();
@@ -275,7 +316,7 @@ if (typeof $response === "undefined") {
     }
   } catch (e) {
     // 修改原因(2026-11-21): 未预期异常必须出声并放行，否则 APP 页面会挂、用户也看不到原因
-    diagNotify("京粉转链｜异常", "脚本内部错误：" + String(e).slice(0, 150));
+    diagNotify("京粉转链｜异常", "脚本内部错误：" + String(e).slice(0, 150), DIAG_KEY_RESP);
     finish();
   }
 }
