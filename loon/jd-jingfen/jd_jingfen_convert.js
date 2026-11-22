@@ -9,6 +9,12 @@
  *   readCustomSurfaceList 等非目标接口），进商品页零通知。参考 wf021325/qx 的 jd_price 插件
  *   （只带路径正则、在你设备上稳弹）补两条触发线：详情页 in.m.jd.com/product/graphext/<sku>.html
  *   （响应侧）与 wareDetailAsyncFloors（请求体明文 skuId）。三条线共用 publish() 出口，sku 去重。
+ * 修改原因(2026-11-22 v7 候选): 通知收敛——默认只保留京粉转链结果通知；CK 抓取通知改为独立
+ *   开关 ck_notify（默认关），心跳/异常诊断统一受 debug_ping 控制（默认关）。同一次打开同一
+ *   商品无论命中几个触发点都只发起一次 ConvertSuperLink（独立于通知去重的短时转链合并）。
+ *   CK 只在缺失/变化/转链返回登录失效时写入，不做周期性重写。非目标 api.m.jd.com 流量在
+ *   读响应体/存储之前直接放行。注意：缓存首屏可能只有 startup+视频/图片、无 SKU，本版不承诺
+ *   「所有首屏都必弹」——没有商品上下文就不转链不通知。
  * 隐私：CK 只存 Loon $persistentStore，不上传任何第三方；转链请求直发 api.m.jd.com。
  * 注意：自推自买违反京东联盟规则，低频自用风险自担。
  *
@@ -51,16 +57,27 @@ const DEDUP_MINUTES = (function () {
   const n = Number(argVal("dedup_min", 10));
   return isFinite(n) && n >= 0 ? n : 10;
 })();
-// 心跳只对目标商品接口弹（非目标静默）；默认关，插件设置里可开（排障用）
+// 心跳/异常诊断只对目标商品接口弹（非目标静默）；默认关，插件设置里可开（排障用）
 const DEBUG_PING = (function () {
   const v = argVal("debug_ping", false);
   return v === true || v === "true" || v === 1 || v === "1";
 })();
+// 修改原因(2026-11-22 v7 候选): CK 抓取通知独立开关——用户要求默认只看转链结果通知，
+//   抓到 CK 属于例行事件，不再默认打扰；需要确认抓取时在插件设置里打开
+const CK_NOTIFY = (function () {
+  const v = argVal("ck_notify", false);
+  return v === true || v === "true" || v === 1 || v === "1";
+})();
 const DIAG_COOLDOWN_SEC = 30;       // 心跳/异常诊断通知冷却，防一次商品页多个响应刷屏
+// 修改原因(2026-11-22 v7 候选): 同一次打开同一商品的转链合并窗口——多个接口/请求与响应
+//   都可能命中同一 SKU，dedup_min=0（每次进入都弹）也不能让同页多个触发点重复转链；
+//   独立于通知去重的短时 map，窗口过后再次进入仍会转链
+const CONVERT_GUARD_SEC = 8;
 // ===================
 
 const CK_KEY = "jd_jf_cookie";
 const DEDUP_KEY = "jd_jf_last";
+const GUARD_KEY = "jd_jf_convert_guard"; // 转链合并表（独立于通知去重表）
 const DIAG_KEY = "jd_jf_diag_ts";        // 通用诊断冷却
 // 修改原因(2026-11-22): REQ/RESP 心跳分开冷却——共用一个 key 时响应心跳会被请求心跳顶掉，
 //   恰好遮住最需要验证的「响应侧」链路
@@ -121,13 +138,31 @@ function saveCkIfNew() {
   const ck = readCk(REQ.headers);
   if (!ck) return "";
   const old = $persistentStore.read(CK_KEY) || "";
-  if (ck !== old) {
-    // 修改原因(2026-11-21审阅): 写入失败时不应谎报「已捕获」
-    if ($persistentStore.write(ck, CK_KEY)) {
-      $notification.post("京东CK已捕获", "", "京粉转链可用（APP 抓的 CK 有效期约 90 天）");
+  // 修改原因(2026-11-22 v7 候选): CK 不做机械重写——只在缺失/变化时写入，相同则零写零通知
+  if (ck === old) return ck;
+  // 修改原因(2026-11-21审阅): 写入失败时不应谎报「已捕获」
+  if ($persistentStore.write(ck, CK_KEY)) {
+    // 修改原因(2026-11-22 v7 候选): CK 抓取通知受独立开关 ck_notify 控制，默认关
+    if (CK_NOTIFY) {
+      try {
+        notify("京东CK已捕获", "京粉转链可用（APP 抓的 CK 有效期约 90 天）");
+      } catch (e) {
+        console.log("jd_jingfen ck notify error: " + String(e));
+      }
     }
   }
   return ck;
+}
+
+// 修改原因(2026-11-22 v7 候选): 转链返回 430（登录失效）时清掉失效 CK——这是用户指定的
+//   三个 CK 更新时机之一；清空后下次命中商品/配置接口会按「缺失」重新捕获新 CK
+function clearInvalidCk() {
+  try {
+    const old = $persistentStore.read(CK_KEY) || "";
+    if (old) $persistentStore.write("", CK_KEY);
+  } catch (e) {
+    console.log("jd_jingfen clearInvalidCk error: " + String(e));
+  }
 }
 
 function notify(title, text, openUrl) {
@@ -136,6 +171,9 @@ function notify(title, text, openUrl) {
 }
 
 function diagNotify(title, text, key) {
+  // 修改原因(2026-11-22 v7 候选): 异常/心跳类诊断通知统一受 debug_ping 控制——默认只保留
+  //   转链结果通知；排障时打开开关即可恢复全部诊断
+  if (!DEBUG_PING) return;
   // 修改原因(2026-11-21): 心跳/异常通知按 DIAG_COOLDOWN_SEC 冷却，一次商品页只出一条
   try {
     const k = key || DIAG_KEY;
@@ -250,8 +288,36 @@ function isDupAndMark(dedupId) {
   }
 }
 
+// 修改原因(2026-11-22 v7 候选): 独立于通知去重的转链合并表——同一 SKU 在 CONVERT_GUARD_SEC
+//   秒内只允许发起一次 ConvertSuperLink。与 dedup 表分开存：dedup_min=0（每次进入都弹）
+//   只解除通知冷却，不解除转链合并；存储异常时放行转链，不让合并表故障挡住主功能
+function isConvertDupAndMark(guardId) {
+  if (!guardId) return false;
+  try {
+    const now = Date.now();
+    const ttl = CONVERT_GUARD_SEC * 1000;
+    let m = JSON.parse($persistentStore.read(GUARD_KEY) || "{}");
+    if (!m || typeof m !== "object" || Array.isArray(m)) m = {};
+    for (const k in m) if (!(now - m[k] < ttl)) delete m[k];
+    if (m[guardId]) return true;
+    m[guardId] = now;
+    const keys = Object.keys(m).sort((a, b) => m[a] - m[b]);
+    while (keys.length > 30) delete m[keys.shift()];
+    $persistentStore.write(JSON.stringify(m), GUARD_KEY);
+    return false;
+  } catch (e) {
+    return false;
+  }
+}
+
 function publish(shareUrl, sku, onDone) {
   const dedupId = sku || shareUrl;
+  // 修改原因(2026-11-22 v7 候选): 先做同页转链合并再做通知去重——合并命中时连 ConvertSuperLink
+  //   都不发起（省请求省流量），通知冷却表也因此不会被同页重复触发点反复写入
+  if (isConvertDupAndMark(dedupId)) {
+    if (onDone) onDone();
+    return;
+  }
   // 修改原因(2026-11-21审阅): 转链前就写冷却——失败/无返利/无CK 的通知同样去重，并发响应不会全部穿透
   if (isDupAndMark(dedupId)) {
     if (onDone) onDone();
@@ -325,6 +391,9 @@ function convert(shareUrl, cb) {
           } else if (d.code === 105) {
             r = { msg: "京喜/极速版链接不支持此转链" };
           } else if (d.code === 430) {
+            // 修改原因(2026-11-22 v7 候选): 登录失效是用户指定的 CK 更新时机之一——
+            //   清掉失效 CK，下次命中商品/配置接口时按缺失重新捕获，不做周期性重写
+            clearInvalidCk();
             r = { msg: "京粉登录态失效：重新抓一次 CK，或检查是否已在京粉完成推客认证" };
           } else {
             r = { msg: "转链失败：" + String(d.message || JSON.stringify(d)).slice(0, 120) };
@@ -339,8 +408,21 @@ function convert(shareUrl, cb) {
 }
 
 // ---------- 入口 ----------
-// 修改原因(2026-11-21审阅): 用 typeof 判请求路径，避免未注入 $response 时 ReferenceError
-if (typeof $response === "undefined") {
+// 修改原因(2026-11-22 v7 候选): 非目标流量快速退出——宽泛规则下 api.m.jd.com 绝大多数
+//   流量与本插件无关，在进入请求/响应分支、读响应体、读写存储之前先做一次目标判定，
+//   非目标直接 $done({}) 静默放行（零通知零存储零网络）。目标判定覆盖 URL 与请求体两面
+//   （functionId 可能只在 POST body 里），与既有闸门逻辑一致，不改 MITM/规则面。
+const REQ_BODY = typeof REQ.body === "string" ? REQ.body : "";
+const IS_API = /^https?:\/\/api\.m\.jd\.com\//i.test(url);
+const IS_GRAPH = RE_GRAPH.test(url);
+const API_TARGET =
+  RE_PRODUCT.test(url) ||
+  RE_CONFIG.test(url) ||
+  RE_ENTRY.test(url) ||
+  (REQ_BODY && (RE_ENTRY.test(REQ_BODY) || RE_PRODUCT.test(REQ_BODY) || RE_CONFIG.test(REQ_BODY)));
+if ((IS_API && !API_TARGET) || (!IS_API && !IS_GRAPH)) {
+  $done({}); // 修改原因(2026-11-22 v7 候选): 快速放行也必须恰好一次 $done，且用 {} 不断连
+} else if (typeof $response === "undefined") {
   // 路径 1：请求——只有目标接口才动手
   // 修改原因(2026-11-22#4): 统一 reqFinish 收口 + 整体 try/catch——任何异常都必须放行，
   //   否则 $done 漏调会让 APP 请求挂起（商品页转圈）；reqDone 闸门保证恰好一次
