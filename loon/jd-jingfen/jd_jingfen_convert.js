@@ -20,10 +20,42 @@
 
 // ===== 可调配置 =====
 const EXT1 = "200|100_3|";          // 京粉推广位参数（老脚本沿用值）
-const DEDUP_MINUTES = 10;           // 同一商品在该时长内不重复弹通知
 const DEBUG = false;                // true 时在 Loon 日志里打印转链原始返回
-// 修改原因(2026-11-22): 心跳只对目标商品接口弹（非目标静默）；确认出返点通知后改 false
-const DEBUG_PING = true;            // true 时商品页目标接口弹心跳（验证链路用，确认后关）
+
+// 修改原因(2026-11-22#4): 去重分钟数/调试心跳改为插件设置项——lpx [Argument] 声明、
+//   规则上 argument=[{dedup_min},{debug_ping}] 传入；$argument 形态做防御（对象/字符串/缺省）
+function argVal(name, dflt) {
+  try {
+    if (typeof $argument === "undefined" || $argument === null) return dflt;
+    if (typeof $argument === "object") {
+      const v = $argument[name];
+      return v === undefined || v === null || v === "" ? dflt : v;
+    }
+    // 修改原因(2026-11-22#5 审阅): 字符串兜底硬化——先 trim（防前导空白 JSON 解析不到）；
+    //   JSON 分支同样把 null/空串归一到默认值（防 dedup_min:null 被 Number 成 0 误关去重）；
+    //   k=v 匹配加词边界（防 xdedup_min=0 误命中）
+    const s = String($argument).trim();
+    if (s.charAt(0) === "{") {
+      try {
+        const o = JSON.parse(s);
+        if (o && o[name] !== undefined && o[name] !== null && o[name] !== "") return o[name];
+      } catch (e) {}
+    }
+    const m = s.match(new RegExp("(?:^|[,\\s;&{])" + name + "=([0-9A-Za-z_.-]+)"));
+    if (m) return m[1];
+  } catch (e) {}
+  return dflt;
+}
+// 同一商品在该时长内不重复弹通知；0 = 每次都弹（用户要求）
+const DEDUP_MINUTES = (function () {
+  const n = Number(argVal("dedup_min", 10));
+  return isFinite(n) && n >= 0 ? n : 10;
+})();
+// 心跳只对目标商品接口弹（非目标静默）；默认关，插件设置里可开（排障用）
+const DEBUG_PING = (function () {
+  const v = argVal("debug_ping", false);
+  return v === true || v === "true" || v === 1 || v === "1";
+})();
 const DIAG_COOLDOWN_SEC = 30;       // 心跳/异常诊断通知冷却，防一次商品页多个响应刷屏
 // ===================
 
@@ -38,7 +70,18 @@ const WX_UA =
   "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MicroMessenger/8.0.47(0x18002f2c) NetType/WIFI Language/zh_CN";
 const WX_REFERER = "https://servicewechat.com/wxf463e50cd384beda/114/page-frame.html"; // 京粉小程序
 
-const url = $request.url;
+// 修改原因(2026-11-22#6 审阅): 入口先做安全兜底——$request 未注入时也不在 try 外抛 ReferenceError；
+//   HTTP 头名不区分大小写，统一转小写匹配（只认 x-referer-page/X-Referer-Page 两种写法会漏触发）
+const REQ = (typeof $request !== "undefined" && $request) || {};
+function headerOf(name) {
+  const h = REQ.headers || {};
+  const key = String(name).toLowerCase();
+  for (const k in h) {
+    if (String(k).toLowerCase() === key) return h[k];
+  }
+  return "";
+}
+const url = REQ.url || "";
 
 // 目标接口分流
 // 修改原因(2026-11-22): 规则宽泛化后所有 api.m.jd.com 流量都进本脚本，目标判定移入脚本：
@@ -54,7 +97,16 @@ const RE_CONFIG = /[?&]functionId=(serverConfig|basicConfig)(?:&|$)/;
 const RE_GRAPH = /^https?:\/\/in\.m\.jd\.com\/product\/graphext\/(\d+)\.html(?:[/?#]|$)/;
 // 修改原因(2026-11-22#3): 边界放宽为 (?:^|[?&])——functionId 在 POST body 里时位于串首，
 //   原先要求前面必有 ?/& 会漏掉（回归用例 8 实测漏）；URL 侧 ?functionId= 行为不变
-const RE_FLOORS = /(?:^|[?&])functionId=(wareDetailAsyncFloors|lite_wareDetailAsyncFloors)(?:&|$)/;
+// 修改原因(2026-11-22#4): 改名 RE_ENTRY 并扩到 4 个入口接口——抓包实证进商品页那一秒，
+//   queryWechatDomainActivity_jsf / asynInteface / wareDetailAsyncFloors 请求体都带明文 skuId，
+//   且 queryWechatDomainActivity_jsf 响应里还有 shareUrl；多点挂钩提高「进商品页即弹」命中率
+const RE_ENTRY = /(?:^|[?&])functionId=(wareDetailAsyncFloors|lite_wareDetailAsyncFloors|queryWechatDomainActivity_jsf|asynInteface)(?:&|$)/;
+// 修改原因(2026-11-22#5 审阅): queryWechatDomainActivity_jsf 响应里带 shareUrl（1190B）——
+//   请求侧没提出 sku 时的兜底入口，响应侧也认它
+const RE_JSF = /(?:^|[?&])functionId=queryWechatDomainActivity_jsf(?:&|$)/;
+// 修改原因(2026-11-22#5 审阅): 通用分发接口集合——必须带商品页上下文才允许转链（单独抽常量，
+//   原写法 用 (reqBody || url) 只测了 body，body 非空时 URL 侧的 functionId 漏判，闸门失效）
+const RE_GENERIC = /(?:^|[?&])functionId=(queryWechatDomainActivity_jsf|asynInteface)(?:&|$)/;
 
 // ---------- 工具 ----------
 function readCk(headers) {
@@ -66,7 +118,7 @@ function readCk(headers) {
 }
 
 function saveCkIfNew() {
-  const ck = readCk($request.headers);
+  const ck = readCk(REQ.headers);
   if (!ck) return "";
   const old = $persistentStore.read(CK_KEY) || "";
   if (ck !== old) {
@@ -171,6 +223,8 @@ function itemUrlOf(sku) {
 // 修改原因(2026-11-22#2审阅): 去重从「单条 last 记录」改为按 SKU 的 map——旧版在 A→B→A 场景
 //   会把 A 再弹一次；map 只保留最近 30 条、自动清过期项，避免存储膨胀
 function isDupAndMark(dedupId) {
+  // 修改原因(2026-11-22#4): dedup_min=0 表示每次都弹（用户要求的开关语义），直接不查不写
+  if (!(DEDUP_MINUTES > 0)) return false;
   if (!dedupId) return false;
   try {
     const now = Date.now();
@@ -288,47 +342,56 @@ function convert(shareUrl, cb) {
 // 修改原因(2026-11-21审阅): 用 typeof 判请求路径，避免未注入 $response 时 ReferenceError
 if (typeof $response === "undefined") {
   // 路径 1：请求——只有目标接口才动手
-  // 修改原因(2026-11-22审阅): 非目标流量零通知零改动——抓 CK 也收敛到目标接口
-  //   （商品/配置请求都带 Cookie，抓取时机不受影响），避免任意 JD 流量触发写库+弹窗
-  // 修改原因(2026-11-22#2): 命中面加上 RE_FLOORS（进商品页的明文 sku 来源）
-  if (RE_PRODUCT.test(url) || RE_CONFIG.test(url) || RE_FLOORS.test(url)) {
-    try {
-      saveCkIfNew();
-    } catch (e) {} // 修改原因(2026-11-21): 抓 CK 出错也不能断连
-    // 修改原因(2026-11-22): 目标商品接口弹请求心跳（证明请求侧规则+脚本执行通），其余静默
-    if (DEBUG_PING && RE_PRODUCT.test(url)) {
-      diagNotify("京粉转链｜心跳REQ", "请求侧链路通✓ " + url.slice(0, 60), DIAG_KEY_REQ);
+  // 修改原因(2026-11-22#4): 统一 reqFinish 收口 + 整体 try/catch——任何异常都必须放行，
+  //   否则 $done 漏调会让 APP 请求挂起（商品页转圈）；reqDone 闸门保证恰好一次
+  let reqDone = false;
+  const reqFinish = () => {
+    if (reqDone) return;
+    reqDone = true;
+    $done({}); // 修改原因(2026-11-21审阅): Loon 无参 $done() 会断开请求，必须 {} 原样放行
+  };
+  try {
+    // 修改原因(2026-11-22审阅): 非目标流量零通知零改动——抓 CK 收敛到商品/配置接口
+    // 修改原因(2026-11-22#5 审阅): 不把 RE_ENTRY 算进抓 CK 触发面——否则购物车页等非商品上下文的
+    //   asynInteface 也会走抓取，无 CK 时弹「还没抓到京东CK」提示，属非目标噪声
+    if (RE_PRODUCT.test(url) || RE_CONFIG.test(url)) {
+      try {
+        saveCkIfNew();
+      } catch (e) {} // 修改原因(2026-11-21): 抓 CK 出错也不能断连
+      if (DEBUG_PING && RE_PRODUCT.test(url)) {
+        diagNotify("京粉转链｜心跳REQ", "请求侧链路通✓ " + url.slice(0, 60), DIAG_KEY_REQ);
+      }
     }
-  }
 
-  // 修改原因(2026-11-22#2): 进商品页第二触发点——wareDetailAsyncFloors 请求体带明文 skuId。
-  //   先 $done 放行再异步转链：楼层请求不被转链网络耗时拖慢；若 Loon 在 $done 后终止上下文，
-  //   最坏也只是这条线不出通知（页面不受影响），详情页/商品页另两条线仍有覆盖
-  // 修改原因(2026-11-22#3): 命中面同时查 URL 和请求体（防 functionId 放 POST body 的形态）；
-  //   读 $request.body 依赖 lpx 规则的 requires-body=true（v4 缺它导致本线静默）
-  const floorsBody = $request.body || "";
-  if (RE_FLOORS.test(url) || (floorsBody && RE_FLOORS.test(floorsBody))) {
-    const sku = skuFromBody(floorsBody || url);
-    if (sku) {
-      if (DEBUG_PING) diagNotify("京粉转链｜心跳楼层", "wareDetailAsyncFloors 命中✓ sku=" + sku, DIAG_KEY_REQ);
-      // 修改原因(2026-11-22#2审阅): Loon 不保证 $done 之后上下文还活着，改成转链完成再放行；
-      //   加 3 秒保底定时释放，且 released 闸门保证 $done 恰好一次，转链异常也不会挂住页面楼层
-      let released = false;
-      const release = () => {
-        if (released) return;
-        released = true;
-        $done({});
-      };
-      setTimeout(release, 3000);
-      publish(itemUrlOf(sku), sku, release);
-      return;
+    // 修改原因(2026-11-22#4): 进商品页那一秒必发、请求体带明文 skuId 的接口在此转链——
+    //   进商品页即弹，不必等滑到『详情』。读 $request.body 依赖 lpx requires-body=true
+    const reqBody = typeof REQ.body === "string" ? REQ.body : "";
+    if (RE_ENTRY.test(url) || (reqBody && RE_ENTRY.test(reqBody))) {
+      const sku = skuFromBody(reqBody || url);
+      const ref = headerOf("x-referer-page") || "";
+      const isWarePage = /WareInfo/i.test(ref);
+      // 修改原因(2026-11-22#5 审阅 REJECT): asynInteface 是通用分发接口（别的页面也会发、也可能带 skuId），
+      //   queryWechatDomainActivity_jsf 同理——这两个必须商品页上下文（x-referer-page=WareInfo*）才允许转链，
+      //   否则会替用户不看的商品转链+弹窗；wareDetailAsyncFloors 是商品详情专属接口，不受此限
+      const needsWarePage = RE_GENERIC.test(url) || (reqBody && RE_GENERIC.test(reqBody));
+      if (sku && (!needsWarePage || isWarePage)) {
+        if (DEBUG_PING) {
+          diagNotify("京粉转链｜心跳入口", "进商品页命中✓ sku=" + sku + " " + url.slice(0, 55), DIAG_KEY_REQ);
+        }
+        // 修改原因(2026-11-22#2审阅): 转链完成再放行 + 3 秒保底释放，页面不被转链耗时挂住
+        setTimeout(reqFinish, 3000);
+        publish(itemUrlOf(sku), sku, reqFinish);
+        return;
+      }
+      // 修改原因(2026-11-22#4): 仅商品页上下文提取失败才报异常，非商品页 asynInteface 静默
+      if (!sku && isWarePage) {
+        diagNotify("京粉转链｜异常", "商品页请求命中但没提出 skuId：" + url.slice(0, 60), DIAG_KEY_RESP);
+      }
     }
-    // 修改原因(2026-11-22#3): 命中目标接口却提不出 skuId 时不再静默——出一条异常通知当证据
-    diagNotify("京粉转链｜异常", "楼层请求命中但没提出 skuId（请求体为空？）：" + url.slice(0, 60), DIAG_KEY_RESP);
-    $done({});
-    return;
+  } catch (e) {
+    diagNotify("京粉转链｜异常", "请求侧脚本错误：" + String(e).slice(0, 120), DIAG_KEY_RESP);
   }
-  $done({}); // 修改原因(2026-11-21审阅): Loon 无参 $done() 会断开请求，必须 {} 原样放行
+  reqFinish();
 } else {
   // 路径 2：响应——按 functionId 分流
   const body = typeof $response.body === "string" ? $response.body : "";
@@ -389,7 +452,12 @@ if (typeof $response === "undefined") {
     }
 
     // 修改原因(2026-11-22): 非目标接口静默放行——宽泛规则下绝大多数流量走到这里，严禁弹通知
-    if (!RE_PRODUCT.test(url)) {
+    // 修改原因(2026-11-22#5 审阅): 商品页响应面加上 queryWechatDomainActivity_jsf（其响应带 shareUrl）；
+    //   与请求侧对称——该接口只在商品页上下文才认，非商品页的 JSF 响应静默放行
+    const respRef = headerOf("x-referer-page") || "";
+    // 修改原因(2026-11-22#6 审阅): JSF 的 functionId 也可能只在请求体里，响应侧同样两面都认
+    const respJsfOk = (RE_JSF.test(url) || (typeof REQ.body === "string" && RE_JSF.test(REQ.body))) && /WareInfo/i.test(respRef);
+    if (!RE_PRODUCT.test(url) && !respJsfOk) {
       finish();
       return;
     }
