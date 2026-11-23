@@ -16,6 +16,9 @@
  *   读响应体/存储之前直接放行。
  * 修改原因(2026-11-23 v8.2): 转链接口返回空 JSON {}（CK 失效/风控的典型体征）时按登录失效
  *   处理——清死 CK + 可读文案，不再弹「转链失败：{}」。
+ * 修改原因(2026-11-23 v8.3): 抓 CK 与目标判定解耦——抓包实证带全量 CK 的是 URL 不带
+ *   functionId 的原生加密接口，旧触发面（?functionId= 明文接口）不带 CK，永远抓不到；
+ *   改为任何 api.m.jd.com 请求放行前先尝试抓 CK。
  *   注意：缓存首屏可能只有 startup+视频/图片、无 SKU，本版不承诺
  *   「所有首屏都必弹」——没有商品上下文就不转链不通知。
  * 修改原因(2026-11-23 v7.1): 抓包 1009 实证缓存首屏没有商品接口，但 ccc-x.jd.com/dsp/nc 的
@@ -151,7 +154,17 @@ const RE_GENERIC = /(?:^|[?&])functionId=(queryWechatDomainActivity_jsf|asynInte
 // ---------- 工具 ----------
 function readCk(headers) {
   const h = headers || {};
-  const c = h.Cookie || h.cookie || "";
+  // 修改原因(2026-11-23 v8.3): 头名大小写硬化——Cookie 头可能以任意大小写出现，
+  //   只认 Cookie/cookie 两种写法会漏抓；全量小写扫描兜底
+  let c = h.Cookie || h.cookie || "";
+  if (!c) {
+    for (const k in h) {
+      if (String(k).toLowerCase() === "cookie") {
+        c = h[k];
+        break;
+      }
+    }
+  }
   const key = c.match(/pt_key=([^;]+)/);
   const pin = c.match(/pt_pin=([^;]+)/);
   return key && pin ? `pt_key=${key[1]};pt_pin=${pin[1]};` : "";
@@ -416,7 +429,7 @@ function publish(shareUrl, sku, onDone) {
 function convert(shareUrl, cb) {
   const ck = $persistentStore.read(CK_KEY) || "";
   if (!ck) {
-    cb({ msg: "还没抓到京东CK：先在京东APP里点一次「签到」，或重新打开商品页触发抓取" });
+    cb({ msg: "还没抓到京东CK：在京东 APP 里随便逛一个商品页即可自动抓取；若一直提示，请重新登录京东 APP 后再逛" });
     return;
   }
   const body = {
@@ -479,7 +492,7 @@ function convert(shareUrl, cb) {
             //   响应后按登录失效处理：清掉死 CK（下次命中商品/配置接口自动重抓），文案给出恢复步骤，
             //   并如实提示可能是风控限流（重抓后仍失败则稍后再试）。
             clearInvalidCk();
-            r = { msg: "登录态异常（接口返回空响应）：已清空旧 CK。去京东 APP 重新登录或点一次「签到」后进商品页即可自动重抓；若重抓后仍失败则是风控限流，稍后再试" };
+            r = { msg: "登录态异常（接口返回空响应）：已清空旧 CK。去京东 APP 重新登录后随便逛一个商品页即可自动重抓；若重抓后仍失败则是风控限流，稍后再试" };
           } else {
             r = { msg: "转链失败：" + String(d.message || JSON.stringify(d)).slice(0, 120) };
           }
@@ -509,6 +522,14 @@ const API_TARGET =
   RE_ENTRY.test(url) ||
   (REQ_BODY && (RE_ENTRY.test(REQ_BODY) || RE_PRODUCT.test(REQ_BODY) || RE_CONFIG.test(REQ_BODY)));
 if ((IS_API && !API_TARGET) || (!IS_API && !IS_GRAPH && !IS_AD)) {
+  // 修改原因(2026-11-23 v8.3): 抓 CK 与目标判定解耦——抓包实证（1009/1011）京东 APP 的
+  //   原生接口（URL 不带 functionId、请求体加密）带全量 Cookie 含 pt_key/pt_pin，而
+  //   ?functionId= 明文接口反而不带；旧逻辑只在 RE_PRODUCT/RE_CONFIG 明文命中时才抓，
+  //   触发面根本不存在，永远抓不到。改为任何 api.m.jd.com 请求放行前先尝试抓 CK（只读
+  //   Cookie 头；写入仍只在缺失/变化时发生，通知仍受 ck_notify 开关约束，隐私口径不变）。
+  try {
+    if (IS_API) saveCkIfNew();
+  } catch (e) {} // 修改原因(2026-11-23): 抓 CK 出错也不能断连
   $done({}); // 修改原因(2026-11-22 v7 候选): 快速放行也必须恰好一次 $done，且用 {} 不断连
 } else if (typeof $response === "undefined") {
   // 路径 1：请求——只有目标接口才动手
