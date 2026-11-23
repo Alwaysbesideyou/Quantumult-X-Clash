@@ -1,53 +1,44 @@
 #!name=京粉转链+京东比价
-#!desc=京东APP自动抓CK+商品页自动京粉转链，一次通知含返利与慢慢买历史价（30/90/180/360天最低）。已合并旧「京东比价」脚本，请删除旧的两个插件只装这一个。v8 新增比价与缓存首屏入口，更新后需删除旧插件重装（MITM 含 ccc-x.jd.com）。
+#!desc=一个插件装两样，规则按阶段错开互不抢：①京东比价 = jdjf_price.js 原样未改（进商品页弹「京东价格/返利」，含慢慢买历史价）；②京粉自返利转链 = 京东APP自动抓CK + 商品页转链，通知只含返点与跳转。请删除旧「京粉」「京东比价」两个插件只装这一个；MITM 含 ccc-x.jd.com，保存后需重装。
 #!system=ios
 
-# 用途：插件页面设置项（Loon Build 733+ 的 [Argument]，官方文档 loon0x00.github.io/docs/Plugin）
-# 修改原因(2026-11-22#4): 用户要求「重复通知」做成插件设置——dedup_min 分钟数可改，0=每次都弹；
-#   debug_ping 是调试心跳开关（链路已验证，默认关，排障时再开）
-# 修改原因(2026-11-22 v7 候选): 通知收敛——默认只保留京粉转链结果通知；CK 抓取通知独立
-#   开关 ck_notify（默认关）；debug_ping 同时控制心跳与异常诊断（默认关）。
-# 修改原因(2026-11-23 v8): 合并 Tartarus2014/Script/jdjf_price.js 的比价能力——price_notify
-#   控制是否在转链通知里附带慢慢买历史价；关掉即回到纯京粉通知。
+# 用途：插件页面设置项（Loon Build 733+ 的 [Argument]）
+# 修改原因(2026-11-22#4): 用户要求「重复通知」做成插件设置——dedup_min 分钟数可改，0=每次都弹
+# 修改原因(2026-11-22 v7 候选): 通知收敛——只保留京粉转链结果通知；CK 抓取通知独立开关 ck_notify
+# 修改原因(2026-11-23 v8.1): 用户要求比价插件「什么都不要变」，把 v8 的「附带历史比价」开关撤掉——
+#   比价整段移回原插件 jdjf_price.js 自己展示，京粉通知只留返点
 [Argument]
 dedup_min = input,10,type=number,tag=重复通知冷却(分钟),desc=同一商品在该时间内只弹一次；填 0 则每次进入都弹（同页多个触发点仍只转链一次）
-price_notify = switch,true,type=boolean,tag=附带历史比价,desc=打开后转链通知里带慢慢买历史最低与 30/90/180/360 天最低价；关掉只弹返利
 debug_ping = switch,false,type=boolean,tag=调试心跳与异常通知,desc=打开后目标接口会弹链路心跳和异常诊断，仅排障时开启
 ck_notify = switch,false,type=boolean,tag=CK抓取通知,desc=抓到/更新京东CK时弹通知；默认关闭，只保留转链结果通知
 
 [Script]
-# 修改原因(2026-11-22 v7 候选): 非目标 api.m.jd.com 流量在脚本内读响应体/存储之前直接放行；
-#   规则面（宽泛 URL、requires-body、MITM hostname）保持 v6 实证形态不变
+# ================= 京东比价（原插件原样，规则照抄脚本头注释） =================
+# 用途：京东商品接口响应——jdjf_price.js 抽分享链接→查慢慢买历史价（+它自己的京粉转链）→
+#       弹「京东价格/返利」通知；serverConfig/basicConfig 清 httpdns 防绕过 MITM
+# 修改原因(2026-11-23 v8.1): 用户要求比价插件什么都不要变——脚本仍走作者原始 URL、规则照抄其头注释，
+#   一个字没改。它占 api.m.jd.com 的 http-response，京粉这边只占 http-request，两边错开阶段，
+#   不再出现「同请求同阶段只跑一条脚本」的互相顶掉。
+http-response ^https?://api\.m\.jd\.com/(client\.action|api)\?functionId=(wareBusiness|serverConfig|basicConfig|lite_wareBusiness|pingou_item) script-path=https://raw.githubusercontent.com/Tartarus2014/Script/master/jdjf_price.js, requires-body=true, tag=京东比价
+
+# ================= 京粉自返利转链（只占请求侧） =================
 # 用途：api.m.jd.com 请求——脚本内按 functionId 分流：抓 pt_key/pt_pin（只存本地，不外传）；
 #       商品接口弹请求心跳；wareDetailAsyncFloors 请求体带明文 skuId → 直接转链
-# 修改原因(2026-11-22): 换策略——带 ?functionId= 查询段的正则真机从未触发（诊断 v2 实证：
-#   宽泛规则 A/C 稳定弹，B2/B3 与原插件两条查询正则全部静默），规则只做宽泛匹配，目标判定移到脚本内
-# 修改原因(2026-11-22#3): 加 requires-body=true——楼层触发线要读 $request.body 提 skuId，
-#   Loon 请求侧脚本不加此 flag 拿不到请求体（响应侧实测可不加，请求侧别赌），v4 楼层线因此静默
-http-request ^https?://api\.m\.jd\.com/ script-path=https://cdn.jsdelivr.net/gh/Alwaysbesideyou/Quantumult-X-Clash@main/loon/jd-jingfen/jd_jingfen_convert.js, requires-body=true, tag=京粉转链, argument=[{dedup_min},{price_notify},{debug_ping},{ck_notify}]
+# 修改原因(2026-11-22): 带 ?functionId= 查询段的正则真机从未触发，规则只做宽泛匹配，目标判定移到脚本内
+# 修改原因(2026-11-22#3): 加 requires-body=true——楼层触发线要读 $request.body 提 skuId
+# 修改原因(2026-11-23 v8.1): 去掉 api.m.jd.com 的响应规则（让给比价原插件），京粉只保留请求侧三条
+http-request ^https?://api\.m\.jd\.com/ script-path=https://cdn.jsdelivr.net/gh/Alwaysbesideyou/Quantumult-X-Clash@main/loon/jd-jingfen/jd_jingfen_convert.js, requires-body=true, tag=京粉转链, argument=[{dedup_min},{debug_ping},{ck_notify}]
 
 # 用途：ccc-x.jd.com 广告上报请求——缓存首屏商品接口不发时，其 ext 参数 base64 里带当前商品链接；
-#       解出 SKU 后转链。只认 item.m.jd.com/product/<digits>.html，其他广告流量静默放行。
-# 修改原因(2026-11-23 v7.1): 抓包 1009 实证 SKU 100006994526 藏在该请求的 ext base64 中，用户确认
-#   与当前页面商品一致；这是缓存首屏唯一可用的商品标识，补上「进商品页即转链」的兜底入口。
-#   注意：MITM 新增 ccc-x.jd.com，保存后需删除旧插件再重装才会生效。
-http-request ^https?://ccc-x\.jd\.com/dsp/nc script-path=https://cdn.jsdelivr.net/gh/Alwaysbesideyou/Quantumult-X-Clash@main/loon/jd-jingfen/jd_jingfen_convert.js, requires-body=true, tag=京粉转链-广告SKU, argument=[{dedup_min},{price_notify},{debug_ping},{ck_notify}]
-
-# 用途：api.m.jd.com 响应——商品页抽分享链接→京粉转链+慢慢买历史价→一条通知；serverConfig/basicConfig
-#       清 httpdns 防绕过 MITM；其余静默放行
-# 修改原因(2026-11-22): 同上换宽泛正则；不带 requires-body/timeout——诊断 C（无 flag 无 timeout）实证 $response.body 可读
-# 修改原因(2026-11-23 v8 审阅): 补 requires-body=true 与旧比价脚本对齐——serverConfig/basicConfig 要回写
-#   清 httpdns 的 body，读写是两回事，不带 flag 时个别 Loon 版本可能忽略回写
-http-response ^https?://api\.m\.jd\.com/ script-path=https://cdn.jsdelivr.net/gh/Alwaysbesideyou/Quantumult-X-Clash@main/loon/jd-jingfen/jd_jingfen_convert.js, requires-body=true, tag=京粉转链, argument=[{dedup_min},{price_notify},{debug_ping},{ck_notify}]
+#       解出 SKU 后转链。只认 item.m.jd.com/product/<digits>.html，其他广告流量静默放行
+# 修改原因(2026-11-23 v7.1): 抓包 1009 实证 SKU 藏在该请求 ext base64 中，补「进商品页即转链」的兜底入口
+http-request ^https?://ccc-x\.jd\.com/dsp/nc script-path=https://cdn.jsdelivr.net/gh/Alwaysbesideyou/Quantumult-X-Clash@main/loon/jd-jingfen/jd_jingfen_convert.js, requires-body=true, tag=京粉转链-广告SKU, argument=[{dedup_min},{debug_ping},{ck_notify}]
 
 # 用途：京东商品详情页 in.m.jd.com/product/graphext/<sku>.html 的请求——sku 直接取自 URL，转链弹通知
-# 修改原因(2026-11-22#2): 参考 wf021325/qx 的 jd_price 插件——它「只在进商品页时弹」且在你设备上实测有效，
-#   触发点就是这个纯路径 URL（不带查询段，避开了查询段正则不触发的坑）；MITM 同步加 in.m.jd.com
-# 修改原因(2026-11-23 v8): 从响应侧改到请求侧——万一还装着慢慢买折线版（它占 graphext 响应），
-#   两边不再互相挤掉；请求侧不需要响应体，sku 直接取 URL
-http-request ^https?://in\.m\.jd\.com/product/graphext/\d+\.html script-path=https://cdn.jsdelivr.net/gh/Alwaysbesideyou/Quantumult-X-Clash@main/loon/jd-jingfen/jd_jingfen_convert.js, tag=京粉转链-详情页REQ, argument=[{dedup_min},{price_notify},{debug_ping},{ck_notify}]
+# 修改原因(2026-11-22#2): 触发点是这个纯路径 URL（不带查询段，避开查询段正则不触发的坑）
+# 修改原因(2026-11-23 v8): 放在请求侧——请求侧不需要响应体，sku 直接取 URL
+http-request ^https?://in\.m\.jd\.com/product/graphext/\d+\.html script-path=https://cdn.jsdelivr.net/gh/Alwaysbesideyou/Quantumult-X-Clash@main/loon/jd-jingfen/jd_jingfen_convert.js, tag=京粉转链-详情页REQ, argument=[{dedup_min},{debug_ping},{ck_notify}]
 
 [MITM]
-# 修改原因(2026-11-23 v7.1): 新增 ccc-x.jd.com 广告 SKU 入口；MITM 必须包含该域名，保存后
-#   需删除旧插件再重装，否则新 hostname 不生效
+# 修改原因(2026-11-23 v7.1): 新增 ccc-x.jd.com 广告 SKU 入口；MITM 必须包含该域名，保存后需删除旧插件再重装
 hostname = api.m.jd.com, in.m.jd.com, ccc-x.jd.com
