@@ -15,6 +15,9 @@
  *   CK 只在缺失/变化/转链返回登录失效时写入，不做周期性重写。非目标 api.m.jd.com 流量在
  *   读响应体/存储之前直接放行。注意：缓存首屏可能只有 startup+视频/图片、无 SKU，本版不承诺
  *   「所有首屏都必弹」——没有商品上下文就不转链不通知。
+ * 修改原因(2026-11-23 v7.1): 抓包 1009 实证缓存首屏没有商品接口，但 ccc-x.jd.com/dsp/nc 的
+ *   ext 参数是 base64 商品链接，含当前 SKU（用户确认与页面商品一致）。新增该请求入口，
+ *   命中即按 SKU 转链；只认解码后的 item.m.jd.com/product/<digits>.html，其他广告/非商品流量静默。
  * 隐私：CK 只存 Loon $persistentStore，不上传任何第三方；转链请求直发 api.m.jd.com。
  * 注意：自推自买违反京东联盟规则，低频自用风险自担。
  *
@@ -112,6 +115,9 @@ const RE_CONFIG = /[?&]functionId=(serverConfig|basicConfig)(?:&|$)/;
 //   ② wareDetailAsyncFloors 请求体是明文 JSON、自带 skuId（wareBusiness 请求体是 ciphertype:5 加密，
 //      只能从响应抽 shareUrl），作为「进商品页」的第二触发点
 const RE_GRAPH = /^https?:\/\/in\.m\.jd\.com\/product\/graphext\/(\d+)\.html(?:[/?#]|$)/;
+// 修改原因(2026-11-23 v7.1): 缓存首屏唯一带当前商品 SKU 的请求——ccc-x 广告上报的 ext 是
+//   base64 商品链接；只处理 dsp/nc，且解码后必须是 item.m.jd.com/product/<sku>.html 才转链
+const RE_AD = /^https?:\/\/ccc-x\.jd\.com\/dsp\/nc(?:[?#]|$)/i;
 // 修改原因(2026-11-22#3): 边界放宽为 (?:^|[?&])——functionId 在 POST body 里时位于串首，
 //   原先要求前面必有 ?/& 会漏掉（回归用例 8 实测漏）；URL 侧 ?functionId= 行为不变
 // 修改原因(2026-11-22#4): 改名 RE_ENTRY 并扩到 4 个入口接口——抓包实证进商品页那一秒，
@@ -224,6 +230,50 @@ function extractShareUrl(obj, body) {
 function skuOf(u) {
   const m = u.match(/(\d+)\.html/) || u.match(/sku=(\d+)/) || u.match(/wareId=(\d+)/);
   return m ? m[1] : "";
+}
+
+// 修改原因(2026-11-23 v7.1): Loon JS 不保证有 atob/Buffer，自己解标准 base64（兼容 base64url
+//   的 -_ 字符和缺省 padding）；只用于解析 ccc-x 的 ext，输入长度很小
+function b64decode(input) {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  const s = String(input || "")
+    .replace(/-/g, "+")
+    .replace(/_/g, "/")
+    .replace(/[^A-Za-z0-9+/=]/g, "");
+  let out = "";
+  let buf = 0;
+  let bits = 0;
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charAt(i);
+    if (c === "=") break;
+    const v = chars.indexOf(c);
+    if (v < 0) continue;
+    buf = (buf << 6) | v;
+    bits += 6;
+    if (bits >= 8) {
+      bits -= 8;
+      out += String.fromCharCode((buf >> bits) & 255);
+    }
+  }
+  return out;
+}
+
+// 修改原因(2026-11-23 v7.1 审阅): 解码结果必须整串就是一个商品链接，不能是包含链接的 JSON/
+//   多商品广告载荷；只认 item.m.jd.com，不收 item.jd.com；允许 ?query/#hash 后缀
+function skuFromAd(text) {
+  const s0 = String(text || "");
+  const m =
+    s0.match(/[?&]ext=([^&#\s]+)/) ||
+    s0.match(/(?:^|[\s&])ext=([^&#\s]+)/) ||
+    s0.match(/"ext"\s*:\s*"([^"]+)"/);
+  if (!m) return "";
+  let s = m[1];
+  try {
+    s = decodeURIComponent(s);
+  } catch (e) {}
+  const decoded = b64decode(s).trim();
+  const mm = decoded.match(/^https?:\/\/item\.m\.jd\.com\/product\/(\d+)\.html(?:[?#].*)?$/i);
+  return mm ? mm[1] : "";
 }
 
 // 修改原因(2026-11-22#2): 从 wareDetailAsyncFloors 的 POST body 取 skuId——该接口 body 是明文 JSON
@@ -415,12 +465,15 @@ function convert(shareUrl, cb) {
 const REQ_BODY = typeof REQ.body === "string" ? REQ.body : "";
 const IS_API = /^https?:\/\/api\.m\.jd\.com\//i.test(url);
 const IS_GRAPH = RE_GRAPH.test(url);
+// 修改原因(2026-11-23 v7.1): ccc-x 广告入口不在 api.m.jd.com，需单独放行给请求分支；
+//   未命中 RE_AD 的其他 ccc-x 流量仍按非目标静默
+const IS_AD = RE_AD.test(url);
 const API_TARGET =
   RE_PRODUCT.test(url) ||
   RE_CONFIG.test(url) ||
   RE_ENTRY.test(url) ||
   (REQ_BODY && (RE_ENTRY.test(REQ_BODY) || RE_PRODUCT.test(REQ_BODY) || RE_CONFIG.test(REQ_BODY)));
-if ((IS_API && !API_TARGET) || (!IS_API && !IS_GRAPH)) {
+if ((IS_API && !API_TARGET) || (!IS_API && !IS_GRAPH && !IS_AD)) {
   $done({}); // 修改原因(2026-11-22 v7 候选): 快速放行也必须恰好一次 $done，且用 {} 不断连
 } else if (typeof $response === "undefined") {
   // 路径 1：请求——只有目标接口才动手
@@ -442,6 +495,25 @@ if ((IS_API && !API_TARGET) || (!IS_API && !IS_GRAPH)) {
       } catch (e) {} // 修改原因(2026-11-21): 抓 CK 出错也不能断连
       if (DEBUG_PING && RE_PRODUCT.test(url)) {
         diagNotify("京粉转链｜心跳REQ", "请求侧链路通✓ " + url.slice(0, 60), DIAG_KEY_REQ);
+      }
+    }
+
+    // 修改原因(2026-11-23 v7.1): 缓存首屏的商品接口可能一条都不发，但 ccc-x 广告上报的 ext
+    //   里带当前商品链接；解出 SKU 后按标准商品链接转链。只认整串 item.m.jd.com/product/<digits>.html。
+    // 修改原因(2026-11-23 v7.1 审阅): 请求若带 x-referer-page 且不是 WareInfo（首页推荐流等）则静默；
+    //   1009 真实请求不带该头，因此不能强制要求有头，只做「有头必验」的防误转闸门。ext 可在 URL 或 body。
+    if (RE_AD.test(url)) {
+      const adText = url + "\n" + (typeof REQ.body === "string" ? REQ.body : "");
+      const sku = skuFromAd(adText);
+      const adRef = headerOf("x-referer-page") || "";
+      const adContextOk = !adRef || /WareInfo/i.test(adRef);
+      if (sku && adContextOk) {
+        if (DEBUG_PING) {
+          diagNotify("京粉转链｜心跳广告入口", "ccc-x 命中✓ sku=" + sku, DIAG_KEY_REQ);
+        }
+        setTimeout(reqFinish, 3000);
+        publish(itemUrlOf(sku), sku, reqFinish);
+        return;
       }
     }
 
