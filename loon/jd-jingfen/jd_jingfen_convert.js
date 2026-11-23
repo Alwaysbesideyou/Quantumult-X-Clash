@@ -30,6 +30,10 @@
  *   比价失效；且此前 wareBusiness 的心跳/转链一直没进本脚本，也是被它抢走的。v8 把比价逻辑并进
  *   本脚本：一次通知 = 返利 + 历史最低 + 30/90/180/360 天最低；慢慢买历史价接口免登录 CK。
  *   先在插件设置里删掉旧「京粉」和「京东比价」两个插件，只装这一个。
+ * 修改原因(2026-11-23 v8.1): 用户要求比价「什么都不要变、只是结合两个插件」——把 v8 并进来的
+ *   比价逻辑整段移出本脚本，改由原插件 jdjf_price.js 原样承担（脚本与规则都不改，走原作者 URL）；
+ *   本脚本退回纯京粉：通知只含返利+跳转，不含历史价。合并插件里比价占 api.m.jd.com 的
+ *   http-response，本脚本只占 http-request，两边错开阶段，不再互相抢（Loon 同请求同阶段只跑一条）。
  *
  * 修改原因(2026-11-22): 换策略重写。诊断 v2 实证：带 ?functionId= 查询段的规则在真机
  *   从未触发（宽泛规则 A/C 稳定弹通知，B2/B3 与原插件两条查询正则全部静默），所以本版
@@ -79,12 +83,6 @@ const DEBUG_PING = (function () {
 //   抓到 CK 属于例行事件，不再默认打扰；需要确认抓取时在插件设置里打开
 const CK_NOTIFY = (function () {
   const v = argVal("ck_notify", false);
-  return v === true || v === "true" || v === 1 || v === "1";
-})();
-// 修改原因(2026-11-23 v8): 比价摘要开关——默认随转链一起弹（返利+历史价一条）；
-//   关掉就只弹返利，回到纯京粉模式
-const PRICE_NOTIFY = (function () {
-  const v = argVal("price_notify", true);
   return v === true || v === "true" || v === 1 || v === "1";
 })();
 const DIAG_COOLDOWN_SEC = 30;       // 心跳/异常诊断通知冷却，防一次商品页多个响应刷屏
@@ -221,148 +219,6 @@ function jumpScheme(target) {
     url: target,
   });
   return "openjd://virtual?params=" + encodeURIComponent(params);
-}
-
-// ===== 比价模块 =====
-// 移植自 Tartarus2014/Script/jdjf_price.js（慢慢买历史价），改为 Loon 原生 $httpClient.post。
-// 修改原因(2026-11-23 v8): 该脚本与本插件拦同一个 api.m.jd.com 响应，Loon 只跑一条，合并成一套。
-//   慢慢买历史价接口不需要登录 CK，也没有额外 MITM 域名（脚本主动外发请求不受 MITM 限制）。
-const PRICE_API = "https://apapia-history.manmanbuy.com/ChromeWidgetServices/WidgetServices.ashx";
-const PRICE_UA =
-  "Mozilla/5.0 (iPhone; CPU iPhone OS 13_1_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 - mmbWebBrowse - ios";
-
-function pad2(n) {
-  return n < 10 ? "0" + n : String(n);
-}
-function ymdOf(ms) {
-  const d = new Date(ms);
-  return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
-}
-// 修改原因(2026-11-23 v8): 原脚本用 eval() 解析时间戳；这里改 Number()，避免执行任意字符串
-function dateOfCell(v) {
-  const m = String(v == null ? "" : v).match(/\d+/);
-  return m ? ymdOf(parseInt(m[0], 10)) : "";
-}
-// 修改原因(2026-11-23 v8): 金额用原脚本的定点加法，避免 0.1+0.2 这类浮点误差
-function moneyAdd(arg1, arg2) {
-  arg1 = arg1.toString();
-  arg2 = arg2.toString();
-  const a = arg1.split(".");
-  const b = arg2.split(".");
-  const d1 = a.length == 2 ? a[1] : "";
-  const d2 = b.length == 2 ? b[1] : "";
-  const maxLen = Math.max(d1.length, d2.length);
-  const m = Math.pow(10, maxLen);
-  const result = Number(((arg1 * m + arg2 * m) / m).toFixed(maxLen));
-  const digits = arguments[2];
-  return typeof digits === "number" ? Number(result.toFixed(digits)) : result;
-}
-function moneySub(a, b) {
-  return moneyAdd(a, -Number(b), arguments[2]);
-}
-function priceDiff(cur, price) {
-  const d = moneySub(cur, price);
-  if (d == 0) return "-";
-  return (d > 0 ? "↑" : "↓") + String(d);
-}
-function lowEntry(name, price, date, cur) {
-  return { Name: name, Price: "¥" + String(price), Date: date, Difference: priceDiff(cur, price), price: price };
-}
-function historySummary(single) {
-  if (!single || typeof single.jiagequshiyh !== "string") return [];
-  const items = single.jiagequshiyh.match(/\[.*?\]/g);
-  if (!items) return [];
-  const list = items.reverse().slice(0, 360);
-  let currentPrice, lowest30, lowest90, lowest180, lowest360;
-  list.forEach(function (item, index) {
-    if (!item.length) return;
-    const result = /\[(.*),(.*),"(.*)".*\]/.exec(item);
-    if (!result) return;
-    // 修改原因(2026-11-23 v8 审阅): 时间戳统一走 dateOfCell（纯毫秒 / "/Date(...)/" 两形态都认），
-    //   原 eval 写法已弃用
-    const date = dateOfCell(result[1]);
-    const price = parseFloat(result[2]);
-    if (!isFinite(price)) return;
-    if (index == 0) {
-      currentPrice = price;
-      lowest30 = lowEntry("三十天最低", price, date, currentPrice);
-      lowest90 = lowEntry("九十天最低", price, date, currentPrice);
-      lowest180 = lowEntry("一百八最低", price, date, currentPrice);
-      lowest360 = lowEntry("三百六最低", price, date, currentPrice);
-    }
-    if (!lowest30) return;
-    if (index < 30 && price < lowest30.price) lowest30 = lowEntry("三十天最低", price, date, currentPrice);
-    if (index < 90 && price < lowest90.price) lowest90 = lowEntry("九十天最低", price, date, currentPrice);
-    if (index < 180 && price < lowest180.price) lowest180 = lowEntry("一百八最低", price, date, currentPrice);
-    if (index < 360 && price < lowest360.price) lowest360 = lowEntry("三百六最低", price, date, currentPrice);
-  });
-  return [lowest30, lowest90, lowest180, lowest360].filter(Boolean);
-}
-function priceSummary(data) {
-  let summary = "";
-  try {
-    const listPriceDetail = (data.PriceRemark && data.PriceRemark.ListPriceDetail) || [];
-    const list = listPriceDetail.slice(0, 4).concat(historySummary(data.single));
-    list.forEach(function (item) {
-      let name = item.Name;
-      if (name == "双11价格") name = "双十一价格";
-      else if (name == "618价格") name = "六一八价格";
-      const price = String(parseInt(String(item.Price).substr(1)));
-      summary += "\n" + name + "   " + (isNaN(price) ? "-" : "¥" + price) + "   " + item.Date + "   " + item.Difference;
-    });
-  } catch (e) {}
-  return summary;
-}
-function lowerMsg(data) {
-  try {
-    if (data.lowerPriceyh == null || data.lowerPriceyh === "" || data.lowerDateyh == null) return "";
-    return "〽️ 历史最低 ➩ " + String(data.lowerPriceyh) + " ║" + "🗓 " + dateOfCell(data.lowerDateyh);
-  } catch (e) {
-    return "";
-  }
-}
-// 修改原因(2026-11-23 v8): 比价失败/超时必须不影响转链通知——2.2s 保底回调 null
-//   （必须短于 publish 的 2.4s 看门狗，保证收口时比价已有结果）
-function requestHistoryPrice(shareUrl, cb) {
-  let fired = false;
-  const done = function (v) {
-    if (fired) return;
-    fired = true;
-    cb(v);
-  };
-  try {
-    $httpClient.post(
-      {
-        url: PRICE_API,
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
-          "User-Agent": PRICE_UA,
-        },
-        body: "methodName=getHistoryTrend&p_url=" + encodeURIComponent(shareUrl),
-      },
-      function (error, resp, data) {
-        try {
-          if (error) return done(null);
-          const d = JSON.parse(data);
-          if (d && d.ok == 1 && d.single) {
-            done({ lowerTip: lowerMsg(d.single), detail: priceSummary(d) });
-          } else if (d && d.ok == 0 && d.msg) {
-            // 修改原因(2026-11-23 v8 审阅): 慢慢买业务错误不再静默——带回通知，用户看得到原因
-            done({ lowerTip: "", detail: "😳 " + String(d.msg).slice(0, 80) });
-          } else {
-            done(null);
-          }
-        } catch (e) {
-          done(null);
-        }
-      }
-    );
-  } catch (e) {
-    done(null);
-  }
-  setTimeout(function () {
-    done(null);
-  }, 2200);
 }
 
 function extractShareUrl(obj, body) {
@@ -531,45 +387,26 @@ function publish(shareUrl, sku, onDone) {
     if (onDone) onDone();
     return;
   }
-  // 修改原因(2026-11-23 v8 审阅): 改成「先查后放行 + 限时收口」——严禁 $done 之后再做异步通知
-  //   （Loon 不保证回收后的回调还执行，会整条通知静默）。两路都到（或 2.4s 看门狗先到）才
-  //   弹通知并放行；released 闸门保证通知与 $done 各恰好一次。看门狗必须短于调用方的 3s 保底，
-  //   否则会出现「$done 已放行、通知才弹」的时序问题。
-  let conv = null;
-  let price = null;
-  let pending = PRICE_NOTIFY ? 2 : 1;
+  // 修改原因(2026-11-23 v8.1): 比价已移回原插件，本通知只留返利。收口沿用 v8 二审通过的模式——
+  //   先 $notification.post 再 onDone()，released 闸门保证通知与 $done 各恰好一次；
+  //   2.4s 看门狗短于调用方 3s 保底，转链回调丢失也能出一条通知并放行
   let released = false;
-  const release = function () {
+  const release = function (r) {
     if (released) return;
     released = true;
     try {
-      const lines = [];
-      if (conv && conv.msg) lines.push(conv.msg);
-      if (price) {
-        if (price.lowerTip) lines.push(price.lowerTip);
-        if (price.detail) lines.push(String(price.detail).trim());
-      }
-      notify("京粉转链", lines.join("\n") || "转链无结果（未知状态）", conv && conv.link ? jumpScheme(conv.link) : "");
+      notify("京粉转链", (r && r.msg) || "转链无结果（未知状态）", r && r.link ? jumpScheme(r.link) : "");
     } catch (e) {
       console.log("jd_jingfen notify error: " + String(e));
     }
     if (onDone) onDone();
   };
-  const settle = function () {
-    if (--pending > 0) return;
-    release();
-  };
-  if (PRICE_NOTIFY) {
-    requestHistoryPrice(shareUrl, function (p) {
-      price = p;
-      settle();
-    });
-  }
   convert(shareUrl, function (r) {
-    conv = r;
-    settle();
+    release(r);
   });
-  setTimeout(release, 2400);
+  setTimeout(function () {
+    release(null);
+  }, 2400);
 }
 
 // ---------- 转链 ----------
