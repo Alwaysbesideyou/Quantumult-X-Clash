@@ -393,51 +393,99 @@ function isConvertDupAndMark(guardId) {
 }
 
 // ---------- 商品名（通知标题） ----------
-// 修改原因(2026-11-23 v8.4): 用户要求返利通知以商品名为标题——分享链接/接口体里没有统一的名字字段，
-//   进商品页并行读一次 <title> 最稳；同 SKU 按 localStorage 键永久缓存（键 jd_jf_title_<sku>，
-//   标题基本不变，换 SKU 自然换键）；超时 2s 或失败静默回退为空，绝不阻塞转链、绝不额外弹通知
+// 修改原因(2026-11-24 v8.6): 商品名第三版——三路兜底：①转链接口返回里的名字（最快零竞态）
+//   ②商品页/分享页取 <title>/og:title/h1（分享短链会 302 到商品页，同样能取到）
+//   ③标题去噪沿用 v8.5。SKU 提取放宽到 query 参数形态；失败不再静默，原因进 debug_ping 诊断
+const SCRIPT_VER = "v8.6";
+
 function skuFromUrl(u) {
-  const m = String(u || "").match(/product\/(\d+)\.html/);
-  return m ? m[1] : "";
+  const str = String(u || "");
+  let m = str.match(/product\/(\d+)\.html/);
+  if (m) return m[1];
+  m = str.match(/[?&#](?:sku|wareId|skuId|productId)=(\d{5,})/i);
+  if (m) return m[1];
+  // 修改原因(2026-11-24 v8.6 一审): 通用 id= 只在 jd 域名下认，防误配非商品 id 抓错页
+  if (/jd\.com/i.test(str)) {
+    m = str.match(/[?&#]id=(\d{5,})/i);
+    if (m) return m[1];
+  }
+  return "";
 }
 
-function fetchTitle(sku, cb) {
-  if (!sku) return cb("");
-  const cacheKey = "jd_jf_title_" + sku;
+function cleanTitle(t) {
+  let x = String(t || "").replace(/\s+/g, " ").trim();
+  x = x.replace(/\s*[-_|]\s*(京东|JD\.COM).*$/i, "").trim();
+  x = x.replace(/\s*【[^】]{0,20}】\s*$/, "").trim();
+  return x;
+}
+
+// 修改原因(2026-11-24 v8.6): 转链接口返回里若带商品名直接用（title/itemName/itemTitle 等常见键）
+function pickApiTitle(data) {
+  try {
+    const keys = ["title", "itemName", "itemTitle", "wareName", "skuName"];
+    const roots = [data, data && data.data, data && data.wareInfo, data && data.skuInfo];
+    for (const root of roots) {
+      if (root && typeof root === "object") {
+        for (const k of keys) {
+          const v = root[k];
+          if (typeof v === "string" && v.trim().length >= 2 && v.trim().length <= 80 && !/^https?:/i.test(v)) {
+            return cleanTitle(v);
+          }
+        }
+      }
+    }
+  } catch (e) {}
+  return "";
+}
+
+function fetchTitle(sku, shareUrl, cb) {
+  const target = sku ? "https://item.m.jd.com/product/" + sku + ".html" : String(shareUrl || "");
+  if (!target) return cb("", "无 sku 无链接");
+  const cacheKey = "jd_jf_title_" + (sku || encodeURIComponent(target).slice(0, 60));
   try {
     const cached = $persistentStore.read(cacheKey) || "";
-    if (cached) return cb(cached);
+    if (cached) return cb(cached, "缓存");
   } catch (e) {}
   let done = false;
-  const finish = function (t) {
+  const finish = function (t, why) {
     if (done) return;
     done = true;
-    try { cb(t); } catch (e) {}
+    try { cb(t, why || ""); } catch (e) {}
   };
-  setTimeout(function () { finish(""); }, 2000);
+  setTimeout(function () { finish("", "取名超时2s"); }, 2000);
   try {
     $httpClient.get(
-      { url: "https://item.m.jd.com/product/" + sku + ".html", headers: { "User-Agent": WX_UA } },
+      { url: target, headers: { "User-Agent": WX_UA } },
       function (error, resp, data) {
         try {
-          if (error || typeof data !== "string") return finish("");
-          // 修改原因(2026-11-24 v8.5): 真实页实测标题 50+ 字常见，160 上限会漏；并剥掉
-          //   「【图片 价格 品牌 评论】」这类尾部噪音，只留商品名主体
-          const m = data.match(/<title[^>]*>([\s\S]{1,300}?)<\/title>/i);
-          let t = m ? m[1].replace(/\s+/g, " ").trim() : "";
-          t = t.replace(/\s*[-_|]\s*(京东|JD\.COM).*$/i, "").trim();
-          t = t.replace(/\s*【[^】]{0,20}】\s*$/, "").trim();
+          if (error) return finish("", "请求失败:" + String(error).slice(0, 40));
+          if (typeof data !== "string") return finish("", "无正文");
+          // 修改原因(2026-11-24 v8.6): <title> → og:title → h1 三级提取
+          let t = "";
+          const mt = data.match(/<title[^>]*>([\s\S]{1,300}?)<\/title>/i);
+          if (mt) t = cleanTitle(mt[1]);
+          if (!t) {
+            const mo = data.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']{2,120})["']/i)
+              || data.match(/<meta[^>]+content=["']([^"']{2,120})["'][^>]+property=["']og:title["']/i);
+            if (mo) t = cleanTitle(mo[1]);
+          }
+          if (!t) {
+            const mh = data.match(/<h1[^>]*>([\s\S]{2,120}?)<\/h1>/i);
+            if (mh) t = cleanTitle(mh[1].replace(/<[^>]+>/g, ""));
+          }
           if (t) {
             try { $persistentStore.write(t, cacheKey); } catch (e) {}
+            finish(t, "页面标题");
+          } else {
+            finish("", "页面无标题(len=" + String(data).length + ")");
           }
-          finish(t);
         } catch (e) {
-          finish("");
+          finish("", "解析异常:" + String(e).slice(0, 40));
         }
       }
     );
   } catch (e) {
-    finish("");
+    finish("", "请求异常:" + String(e).slice(0, 40));
   }
 }
 
@@ -465,23 +513,34 @@ function publish(shareUrl, sku, onDone) {
   //   改为：转链回来后若标题还在路上，等它最多 600ms（标题一到立刻发），超时回退「京粉转链」；
   //   600ms 远小于 2.4s 转链看门狗，仍短于调用方 3s 保底
   let pdpTitle = "";
+  let pdpTitleWhy = "";
   let pdpPending = false;
   const fire = function () {
     if (notified) return;
     notified = true;
     const r = captured;
+    // 修改原因(2026-11-24 v8.6): 标题优先级=接口返回名 > 页面标题 > 回退名；debug_ping 下附诊断条
+    const apiT = (r && r.title) || "";
+    const shown = apiT || pdpTitle || "京粉转链";
+    const src = apiT ? "接口返回" : (pdpTitle ? ("页面:" + (pdpTitleWhy || "")) : ("回退:" + (pdpTitleWhy || "")));
     try {
-      notify(pdpTitle || "京粉转链", (r && r.msg) || "转链无结果（未知状态）", r && r.link ? jumpScheme(r.link) : "");
+      notify(shown, (r && r.msg) || "转链无结果（未知状态）", r && r.link ? jumpScheme(r.link) : "");
     } catch (e) {
       console.log("jd_jingfen notify error: " + String(e));
+    }
+    if (DEBUG_PING) {
+      try {
+        notify("京粉·诊断 " + SCRIPT_VER, "sku=" + (sku || skuFromUrl(shareUrl) || "(无)") + "｜标题=" + src + "｜" + (shown === "京粉转链" ? "已回退默认名" : shown.slice(0, 30)), "");
+      } catch (e) {}
     }
     if (onDone) onDone();
   };
   try {
     if (($persistentStore.read(CK_KEY) || "").trim()) {
       pdpPending = true;
-      fetchTitle(sku || skuFromUrl(shareUrl), function (t) {
+      fetchTitle(sku || skuFromUrl(shareUrl), shareUrl, function (t, why) {
         pdpPending = false;
+        pdpTitleWhy = why || "";
         if (t) pdpTitle = t;
         if (released) fire();
       });
@@ -489,12 +548,15 @@ function publish(shareUrl, sku, onDone) {
   } catch (e) {
     pdpPending = false;
   }
+  const t0 = Date.now();
   const release = function (r) {
     if (released) return;
     released = true;
     captured = r;
     if (pdpPending) {
-      setTimeout(fire, 600);
+      // 修改原因(2026-11-24 v8.6 一审): 等待上限改动态——真机整页抓取常超过 600ms，
+      //   固定短等待导致一直显示回退名；上限贴着 2.4s 转链看门狗走，最低 600ms
+      setTimeout(fire, Math.max(600, 2200 - (Date.now() - t0)));
       return;
     }
     fire();
@@ -558,6 +620,9 @@ function convert(shareUrl, cb) {
                 msg: `💰返点 ${d.data.wlCommissionShare}%｜预计返利 ¥${d.data.wlCommission}`,
                 link: d.data.promotionUrl,
               };
+              // 修改原因(2026-11-24 v8.6): 转链接口返回里若带商品名直接用，零竞态
+              const apiTitle = pickApiTitle(d);
+              if (apiTitle) r.title = apiTitle;
             } else {
               r = { msg: "该商品暂无返利" + (d.data.formatContext ? "：" + String(d.data.formatContext).trim() : "") };
             }
