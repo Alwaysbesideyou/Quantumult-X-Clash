@@ -171,11 +171,13 @@ function readCk(headers) {
 }
 
 function saveCkIfNew() {
+  // 修改原因(2026-11-23 v8.4): 用户要求「过期了或 CK 为空才抓」——store 非空立即返回，
+  //   不再逐请求解析 Cookie 头、不再覆盖写入（v7/v8.3 的「缺失/变化」策略作废）；
+  //   CK 失效由 430/空响应分支清空后，下一次 api.m.jd.com 请求会按「缺失」自动补抓
+  const old = $persistentStore.read(CK_KEY) || "";
+  if (old) return old;
   const ck = readCk(REQ.headers);
   if (!ck) return "";
-  const old = $persistentStore.read(CK_KEY) || "";
-  // 修改原因(2026-11-22 v7 候选): CK 不做机械重写——只在缺失/变化时写入，相同则零写零通知
-  if (ck === old) return ck;
   // 修改原因(2026-11-21审阅): 写入失败时不应谎报「已捕获」
   if ($persistentStore.write(ck, CK_KEY)) {
     // 修改原因(2026-11-22 v7 候选): CK 抓取通知受独立开关 ck_notify 控制，默认关
@@ -390,6 +392,52 @@ function isConvertDupAndMark(guardId) {
   }
 }
 
+// ---------- 商品名（通知标题） ----------
+// 修改原因(2026-11-23 v8.4): 用户要求返利通知以商品名为标题——分享链接/接口体里没有统一的名字字段，
+//   进商品页并行读一次 <title> 最稳；同 SKU 按 localStorage 键永久缓存（键 jd_jf_title_<sku>，
+//   标题基本不变，换 SKU 自然换键）；超时 2s 或失败静默回退为空，绝不阻塞转链、绝不额外弹通知
+function skuFromUrl(u) {
+  const m = String(u || "").match(/product\/(\d+)\.html/);
+  return m ? m[1] : "";
+}
+
+function fetchTitle(sku, cb) {
+  if (!sku) return cb("");
+  const cacheKey = "jd_jf_title_" + sku;
+  try {
+    const cached = $persistentStore.read(cacheKey) || "";
+    if (cached) return cb(cached);
+  } catch (e) {}
+  let done = false;
+  const finish = function (t) {
+    if (done) return;
+    done = true;
+    try { cb(t); } catch (e) {}
+  };
+  setTimeout(function () { finish(""); }, 2000);
+  try {
+    $httpClient.get(
+      { url: "https://item.m.jd.com/product/" + sku + ".html", headers: { "User-Agent": WX_UA } },
+      function (error, resp, data) {
+        try {
+          if (error || typeof data !== "string") return finish("");
+          const m = data.match(/<title[^>]*>([\s\S]{1,160}?)<\/title>/i);
+          let t = m ? m[1].replace(/\s+/g, " ").trim() : "";
+          t = t.replace(/\s*[-_|]\s*(京东|JD\.COM).*$/i, "").trim();
+          if (t) {
+            try { $persistentStore.write(t, cacheKey); } catch (e) {}
+          }
+          finish(t);
+        } catch (e) {
+          finish("");
+        }
+      }
+    );
+  } catch (e) {
+    finish("");
+  }
+}
+
 function publish(shareUrl, sku, onDone) {
   const dedupId = sku || shareUrl;
   // 修改原因(2026-11-22 v7 候选): 先做同页转链合并再做通知去重——合并命中时连 ConvertSuperLink
@@ -407,11 +455,19 @@ function publish(shareUrl, sku, onDone) {
   //   先 $notification.post 再 onDone()，released 闸门保证通知与 $done 各恰好一次；
   //   2.4s 看门狗短于调用方 3s 保底，转链回调丢失也能出一条通知并放行
   let released = false;
+  // 修改原因(2026-11-23 v8.4): 有 CK 才值得拉商品名（无 CK 时通知是抓取引导，名字没意义）；
+  //   与转链并行、不等待——回调回来时标题已就绪就用商品名当标题，否则回退「京粉转链」
+  let pdpTitle = "";
+  try {
+    if (($persistentStore.read(CK_KEY) || "").trim()) {
+      fetchTitle(sku || skuFromUrl(shareUrl), function (t) { if (t) pdpTitle = t; });
+    }
+  } catch (e) {}
   const release = function (r) {
     if (released) return;
     released = true;
     try {
-      notify("京粉转链", (r && r.msg) || "转链无结果（未知状态）", r && r.link ? jumpScheme(r.link) : "");
+      notify(pdpTitle || "京粉转链", (r && r.msg) || "转链无结果（未知状态）", r && r.link ? jumpScheme(r.link) : "");
     } catch (e) {
       console.log("jd_jingfen notify error: " + String(e));
     }
@@ -499,6 +555,17 @@ function convert(shareUrl, cb) {
         }
       } catch (e) {
         r = { msg: "转链响应处理异常：" + String(e).slice(0, 120) };
+      }
+      // 修改原因(2026-11-23 v8.4 审阅): 死CK兜底——转链失败时若请求头里的 pt_key 与本地不同，
+      //   说明京东 APP 已换发新 CK（旧值只是本地滞留），清空后下一次 api 请求按「缺失」补抓；
+      //   pt_key 相同则不动（430/空响应分支自己会清），不恢复 v7 的「变化就写」全量策略
+      if (r && !r.link) {
+        try {
+          const hck = readCk(REQ.headers);
+          const hkey = hck.match(/pt_key=([^;]+)/);
+          const lkey = ($persistentStore.read(CK_KEY) || "").match(/pt_key=([^;]+)/);
+          if (hkey && lkey && hkey[1] !== lkey[1]) clearInvalidCk();
+        } catch (e) {}
       }
       cb(r || { msg: "转链无结果（未知状态）" });
     }
