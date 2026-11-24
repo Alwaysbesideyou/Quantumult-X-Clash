@@ -421,9 +421,12 @@ function fetchTitle(sku, cb) {
       function (error, resp, data) {
         try {
           if (error || typeof data !== "string") return finish("");
-          const m = data.match(/<title[^>]*>([\s\S]{1,160}?)<\/title>/i);
+          // 修改原因(2026-11-24 v8.5): 真实页实测标题 50+ 字常见，160 上限会漏；并剥掉
+          //   「【图片 价格 品牌 评论】」这类尾部噪音，只留商品名主体
+          const m = data.match(/<title[^>]*>([\s\S]{1,300}?)<\/title>/i);
           let t = m ? m[1].replace(/\s+/g, " ").trim() : "";
           t = t.replace(/\s*[-_|]\s*(京东|JD\.COM).*$/i, "").trim();
+          t = t.replace(/\s*【[^】]{0,20}】\s*$/, "").trim();
           if (t) {
             try { $persistentStore.write(t, cacheKey); } catch (e) {}
           }
@@ -455,23 +458,46 @@ function publish(shareUrl, sku, onDone) {
   //   先 $notification.post 再 onDone()，released 闸门保证通知与 $done 各恰好一次；
   //   2.4s 看门狗短于调用方 3s 保底，转链回调丢失也能出一条通知并放行
   let released = false;
-  // 修改原因(2026-11-23 v8.4): 有 CK 才值得拉商品名（无 CK 时通知是抓取引导，名字没意义）；
-  //   与转链并行、不等待——回调回来时标题已就绪就用商品名当标题，否则回退「京粉转链」
+  let notified = false;
+  let captured = null;
+  // 修改原因(2026-11-24 v8.5): 修竞态——转链回调常先于商品页标题返回，旧逻辑通知先发、
+  //   标题没赶上就永远显示默认名（且去重 10 分钟内不再弹，用户根本看不到第二次机会）。
+  //   改为：转链回来后若标题还在路上，等它最多 600ms（标题一到立刻发），超时回退「京粉转链」；
+  //   600ms 远小于 2.4s 转链看门狗，仍短于调用方 3s 保底
   let pdpTitle = "";
-  try {
-    if (($persistentStore.read(CK_KEY) || "").trim()) {
-      fetchTitle(sku || skuFromUrl(shareUrl), function (t) { if (t) pdpTitle = t; });
-    }
-  } catch (e) {}
-  const release = function (r) {
-    if (released) return;
-    released = true;
+  let pdpPending = false;
+  const fire = function () {
+    if (notified) return;
+    notified = true;
+    const r = captured;
     try {
       notify(pdpTitle || "京粉转链", (r && r.msg) || "转链无结果（未知状态）", r && r.link ? jumpScheme(r.link) : "");
     } catch (e) {
       console.log("jd_jingfen notify error: " + String(e));
     }
     if (onDone) onDone();
+  };
+  try {
+    if (($persistentStore.read(CK_KEY) || "").trim()) {
+      pdpPending = true;
+      fetchTitle(sku || skuFromUrl(shareUrl), function (t) {
+        pdpPending = false;
+        if (t) pdpTitle = t;
+        if (released) fire();
+      });
+    }
+  } catch (e) {
+    pdpPending = false;
+  }
+  const release = function (r) {
+    if (released) return;
+    released = true;
+    captured = r;
+    if (pdpPending) {
+      setTimeout(fire, 600);
+      return;
+    }
+    fire();
   };
   convert(shareUrl, function (r) {
     release(r);
