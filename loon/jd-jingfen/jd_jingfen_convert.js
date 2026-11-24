@@ -165,9 +165,20 @@ function readCk(headers) {
       }
     }
   }
+  // 修改原因(2026-11-24 v8.7 用户实测): 「CK 有效却提示无效/风控」——老比价脚本转链送的是完整
+  //   Cookie 串（BoxJS CookieJD 全量），我们只送 pt_key;pt_pin 两个字段，京粉接口把这种裸会话
+  //   当异常/风控拒。改为整段保存、整段使用（__jda/__jdv/wskey 等风控指纹一并带上）。
+  //   凭据边界不变：只存本机 Loon store、只在转链时发往京东自家接口，不外传不落日志
   const key = c.match(/pt_key=([^;]+)/);
   const pin = c.match(/pt_pin=([^;]+)/);
-  return key && pin ? `pt_key=${key[1]};pt_pin=${pin[1]};` : "";
+  return key && pin ? String(c).trim() : "";
+}
+
+// 修改原因(2026-11-24 v8.7): 全量 Cookie 里可能叠加多个 pt_key（cookie jar 新旧共存），
+//   取最后一个（最新）用于「是否换发」比对，防把有效 CK 误判为死 CK 清掉
+function jsKeyOf(cookieStr) {
+  const ms = String(cookieStr || "").match(/pt_key=[^;]+/g);
+  return ms ? ms[ms.length - 1] : "";
 }
 
 function saveCkIfNew() {
@@ -396,7 +407,7 @@ function isConvertDupAndMark(guardId) {
 // 修改原因(2026-11-24 v8.6): 商品名第三版——三路兜底：①转链接口返回里的名字（最快零竞态）
 //   ②商品页/分享页取 <title>/og:title/h1（分享短链会 302 到商品页，同样能取到）
 //   ③标题去噪沿用 v8.5。SKU 提取放宽到 query 参数形态；失败不再静默，原因进 debug_ping 诊断
-const SCRIPT_VER = "v8.6";
+const SCRIPT_VER = "v8.7";
 
 function skuFromUrl(u) {
   const str = String(u || "");
@@ -652,10 +663,9 @@ function convert(shareUrl, cb) {
       //   pt_key 相同则不动（430/空响应分支自己会清），不恢复 v7 的「变化就写」全量策略
       if (r && !r.link) {
         try {
-          const hck = readCk(REQ.headers);
-          const hkey = hck.match(/pt_key=([^;]+)/);
-          const lkey = ($persistentStore.read(CK_KEY) || "").match(/pt_key=([^;]+)/);
-          if (hkey && lkey && hkey[1] !== lkey[1]) clearInvalidCk();
+          const hkey = jsKeyOf(readCk(REQ.headers));
+          const lkey = jsKeyOf($persistentStore.read(CK_KEY) || "");
+          if (hkey && lkey && hkey !== lkey) clearInvalidCk();
         } catch (e) {}
       }
       cb(r || { msg: "转链无结果（未知状态）" });
