@@ -14,7 +14,8 @@
 [Argument]
 dedup_min = input,10,type=number,tag=重复通知冷却(分钟),desc=同一商品在该时间内只弹一次；填 0 则每次进入都弹（同页多个触发点仍只转链一次）
 debug_ping = switch,false,type=boolean,tag=调试心跳与异常通知,desc=打开后目标接口会弹链路心跳和异常诊断，仅排障时开启
-ck_notify = switch,false,type=boolean,tag=CK抓取通知,desc=抓到/更新京东CK时弹通知；默认关闭，只保留转链结果通知
+ck_notify = switch,false,type=boolean,tag=CK抓取通知,desc=抓到京东CK时弹通知；默认关闭，只保留转链结果通知
+price_show = switch,true,type=boolean,tag=比价显示,desc=关闭后不再显示比价信息（默认开）
 
 # 修改原因(2026-11-23 v8.4 用户拍板): 全部脚本 URL 直连 raw.githubusercontent.com，不用任何 CDN——
 #   jsdelivr @main 分支指针缓存最长 12h（purge 只清文件缓存不清指针），发版后长时间拉旧脚本；
@@ -22,15 +23,15 @@ ck_notify = switch,false,type=boolean,tag=CK抓取通知,desc=抓到/更新京�
 #   发版流程：推 jd_jingfen_convert.js（或 jdjf_price.js）即生效；Loon 里「更新插件」重拉脚本即可。
 
 [Script]
-# ================= 京东比价（原插件原样，规则照抄脚本头注释） =================
-# 用途：京东商品接口响应——jdjf_price.js 抽分享链接→查慢慢买历史价（+它自己的京粉转链）→
-#       弹「京东价格/返利」通知；serverConfig/basicConfig 清 httpdns 防绕过 MITM
-# 修改原因(2026-11-23 v8.1): 用户要求比价插件什么都不要变——它占 api.m.jd.com 的 http-response，
-#   京粉这边只占 http-request，两边错开阶段，不再出现「同请求同阶段只跑一条脚本」的互相顶掉。
-# 修改原因(2026-11-23 v8.4): 比价不生效的修法=原件字节不改镜像进本仓库（sha256 de3c4a0f…），
-#   规则写法回退成老插件那份「能跑」的同款（requires-body=1 在前）；
-#   下载源按用户拍板直连 raw.githubusercontent（老插件实测能跑的同一来源，无 CDN 缓存层）
-http-response ^https?://api\.m\.jd\.com/(client\.action|api)\?functionId=(wareBusiness|serverConfig|basicConfig|lite_wareBusiness|pingou_item) requires-body=1,script-path=https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/main/loon/jd-jingfen/jdjf_price.js, tag=京东比价
+# ================= 京东比价（门面 jdjf_price_gate.js，内嵌作者原版 jdjf_price.js） =================
+# 用途：api.m.jd.com 的 client.action/api 响应——门面判 functionId（URL 与请求体都查）+ price_show 显示开关，
+#       命中才执行内嵌的作者原版 jdjf_price.js（一字未改，sha256 de3c4a0f…）；debug_ping 下弹触发面诊断
+# 修改原因(2026-11-24 v8.6): 合并插件里比价长期静默不生效、远程无法定位（正则/触发面/脚本位/下载源
+#   都有嫌疑）——改为门面架构一次消除：①触发面放宽到全部 client.action/api 响应（防京东把 functionId
+#   挪进请求体/改查询格式导致窄正则静默失效）②下载源与转链主脚本同一条 raw 通道（转链在跑=必能拉下）
+#   ③用户要求的显示开关 price_show ④自诊断。规则写法按 Loon 官方文档插件示例（script-path 在前、
+#   requires-body=true）。Loon 硬规则：一个响应只跑一条 http-response 脚本，故比价必须并入自家门面。
+http-response ^https?://api\.m\.jd\.com/(client\.action|api) script-path=https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/main/loon/jd-jingfen/jdjf_price_gate.js, requires-body=true, tag=京东比价, argument=[{price_show},{debug_ping}]
 
 # ================= 京粉自返利转链（只占请求侧） =================
 # 用途：api.m.jd.com 请求——脚本内按 functionId 分流：抓 pt_key/pt_pin（只存本地，不外传）；
