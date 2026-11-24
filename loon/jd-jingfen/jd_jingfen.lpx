@@ -16,6 +16,11 @@ dedup_min = input,10,type=number,tag=重复通知冷却(分钟),desc=同一商�
 debug_ping = switch,false,type=boolean,tag=调试心跳与异常通知,desc=打开后目标接口会弹链路心跳和异常诊断，仅排障时开启
 ck_notify = switch,false,type=boolean,tag=CK抓取通知,desc=抓到/更新京东CK时弹通知；默认关闭，只保留转链结果通知
 
+# 修改原因(2026-11-23 v8.4): 脚本 URL 从 @main 钉到确定 commit——实测 jsdelivr 的 @main 分支指针
+#   缓存最长 12 小时且 purge 只清文件缓存不清指针，发版后会长时间拉到旧脚本。钉 SHA 即刻生效。
+#   发版流程：①推 jd_jingfen_convert.js → ②查它的新 commit SHA → ③把本文件 3 处 js 的 @<commit>
+#   换成新 SHA → ④推本文件（比价镜像 jdjf_price.js 不常动，换脚本时同样处理）。
+
 [Script]
 # ================= 京东比价（原插件原样，规则照抄脚本头注释） =================
 # 用途：京东商品接口响应——jdjf_price.js 抽分享链接→查慢慢买历史价（+它自己的京粉转链）→
@@ -25,7 +30,7 @@ ck_notify = switch,false,type=boolean,tag=CK抓取通知,desc=抓到/更新京�
 # 修改原因(2026-11-23 v8.4): 用户反馈本版比价不生效——raw.githubusercontent 在手机端 Loon 常拉不下来，
 #   规则在、脚本空，静默无显示。脚本内容字节不改（sha256 de3c4a0f…，镜像于本仓库 loon/jd-jingfen/jdjf_price.js），
 #   仅把下载源换成 jsdelivr，规则写法回退成老插件那份「能跑」的同款（requires-body=1 在前）
-http-response ^https?://api\.m\.jd\.com/(client\.action|api)\?functionId=(wareBusiness|serverConfig|basicConfig|lite_wareBusiness|pingou_item) requires-body=1,script-path=https://cdn.jsdelivr.net/gh/Alwaysbesideyou/Quantumult-X-Clash@main/loon/jd-jingfen/jdjf_price.js, tag=京东比价
+http-response ^https?://api\.m\.jd\.com/(client\.action|api)\?functionId=(wareBusiness|serverConfig|basicConfig|lite_wareBusiness|pingou_item) requires-body=1,script-path=https://cdn.jsdelivr.net/gh/Alwaysbesideyou/Quantumult-X-Clash@e37cfbc79c1dcff71f94e97a5fb600daa45842b6/loon/jd-jingfen/jdjf_price.js, tag=京东比价
 
 # ================= 京粉自返利转链（只占请求侧） =================
 # 用途：api.m.jd.com 请求——脚本内按 functionId 分流：抓 pt_key/pt_pin（只存本地，不外传）；
@@ -33,17 +38,17 @@ http-response ^https?://api\.m\.jd\.com/(client\.action|api)\?functionId=(wareBu
 # 修改原因(2026-11-22): 带 ?functionId= 查询段的正则真机从未触发，规则只做宽泛匹配，目标判定移到脚本内
 # 修改原因(2026-11-22#3): 加 requires-body=true——楼层触发线要读 $request.body 提 skuId
 # 修改原因(2026-11-23 v8.1): 去掉 api.m.jd.com 的响应规则（让给比价原插件），京粉只保留请求侧三条
-http-request ^https?://api\.m\.jd\.com/ script-path=https://cdn.jsdelivr.net/gh/Alwaysbesideyou/Quantumult-X-Clash@main/loon/jd-jingfen/jd_jingfen_convert.js, requires-body=true, tag=京粉转链, argument=[{dedup_min},{debug_ping},{ck_notify}]
+http-request ^https?://api\.m\.jd\.com/ script-path=https://cdn.jsdelivr.net/gh/Alwaysbesideyou/Quantumult-X-Clash@0b9e6797c862e7e14c1f590f8a304b9378b32ef9/loon/jd-jingfen/jd_jingfen_convert.js, requires-body=true, tag=京粉转链, argument=[{dedup_min},{debug_ping},{ck_notify}]
 
 # 用途：ccc-x.jd.com 广告上报请求——缓存首屏商品接口不发时，其 ext 参数 base64 里带当前商品链接；
 #       解出 SKU 后转链。只认 item.m.jd.com/product/<digits>.html，其他广告流量静默放行
 # 修改原因(2026-11-23 v7.1): 抓包 1009 实证 SKU 藏在该请求 ext base64 中，补「进商品页即转链」的兜底入口
-http-request ^https?://ccc-x\.jd\.com/dsp/nc script-path=https://cdn.jsdelivr.net/gh/Alwaysbesideyou/Quantumult-X-Clash@main/loon/jd-jingfen/jd_jingfen_convert.js, requires-body=true, tag=京粉转链-广告SKU, argument=[{dedup_min},{debug_ping},{ck_notify}]
+http-request ^https?://ccc-x\.jd\.com/dsp/nc script-path=https://cdn.jsdelivr.net/gh/Alwaysbesideyou/Quantumult-X-Clash@0b9e6797c862e7e14c1f590f8a304b9378b32ef9/loon/jd-jingfen/jd_jingfen_convert.js, requires-body=true, tag=京粉转链-广告SKU, argument=[{dedup_min},{debug_ping},{ck_notify}]
 
 # 用途：京东商品详情页 in.m.jd.com/product/graphext/<sku>.html 的请求——sku 直接取自 URL，转链弹通知
 # 修改原因(2026-11-22#2): 触发点是这个纯路径 URL（不带查询段，避开查询段正则不触发的坑）
 # 修改原因(2026-11-23 v8): 放在请求侧——请求侧不需要响应体，sku 直接取 URL
-http-request ^https?://in\.m\.jd\.com/product/graphext/\d+\.html script-path=https://cdn.jsdelivr.net/gh/Alwaysbesideyou/Quantumult-X-Clash@main/loon/jd-jingfen/jd_jingfen_convert.js, tag=京粉转链-详情页REQ, argument=[{dedup_min},{debug_ping},{ck_notify}]
+http-request ^https?://in\.m\.jd\.com/product/graphext/\d+\.html script-path=https://cdn.jsdelivr.net/gh/Alwaysbesideyou/Quantumult-X-Clash@0b9e6797c862e7e14c1f590f8a304b9378b32ef9/loon/jd-jingfen/jd_jingfen_convert.js, tag=京粉转链-详情页REQ, argument=[{dedup_min},{debug_ping},{ck_notify}]
 
 [MITM]
 # 修改原因(2026-11-23 v7.1): 新增 ccc-x.jd.com 广告 SKU 入口；MITM 必须包含该域名，保存后需删除旧插件再重装
