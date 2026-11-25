@@ -1,44 +1,31 @@
-#!name=京粉转链+京东比价
-#!desc=一个插件装两样，规则按阶段错开互不抢：①京东比价 = jdjf_price.js 原样未改（进商品页弹「京东价格/返利」，含慢慢买历史价）；②京粉自返利转链 = 京东APP自动抓CK + 商品页转链，通知只含返点与跳转。请删除旧「京粉」「京东比价」两个插件只装这一个；MITM 含 ccc-x.jd.com，保存后需重装。
+#!name=京粉转链
+#!desc=京东APP自动抓CK + 商品页自返利转链，通知只含返点与跳转。比价已拆出：请另行安装原版「京东比价」插件，两插件可共存（本插件只占请求侧，比价占响应侧，Loon 一条响应只跑一个脚本，不会打架）。域名与旧版相同，老用户直接「更新插件」即可生效。
 #!system=ios
 
 # 用途：插件页面设置项（Loon Build 733+ 的 [Argument]）
 # 修改原因(2026-11-22#4): 用户要求「重复通知」做成插件设置——dedup_min 分钟数可改，0=每次都弹
 # 修改原因(2026-11-22 v7 候选): 通知收敛——只保留京粉转链结果通知；CK 抓取通知独立开关 ck_notify
-# 修改原因(2026-11-23 v8.1): 用户要求比价插件「什么都不要变」，把 v8 的「附带历史比价」开关撤掉——
-#   比价整段移回原插件 jdjf_price.js 自己展示，京粉通知只留返点
-# 修改原因(2026-11-23 v8.2): 转链返回空 JSON {}（CK 失效/风控）时清死 CK + 可读文案，
-#   不再弹「转链失败：{}」；规则面不变，只改 jd_jingfen_convert.js
-# 修改原因(2026-11-23 v8.3): 抓 CK 解耦到全部 api.m.jd.com 请求（抓包实证带 CK 的是原生
-#   加密接口，旧 ?functionId= 触发面不带 CK）；规则面不变，只改 jd_jingfen_convert.js
+# 修改原因(2026-11-23 v8.2): 转链返回空 JSON {}（CK 失效/风控）时清死 CK + 可读文案，不再弹「转链失败：{}」
+# 修改原因(2026-11-23 v8.3): 抓 CK 解耦到全部 api.m.jd.com 请求（抓包实证带 CK 的是原生加密接口）
+# 修改原因(2026-11-25 v9 拆分): 按用户要求把比价整段移出本插件（http-response 门面 jdjf_price_gate.js
+#   与 price_show 开关一并删除），恢复原版「京东比价」插件独立承担比价；本插件只留转链三条请求侧规则。
+#   CK 失效判定（430/空响应清 CK）本轮不动——用户反馈空响应是否等于真失效待实测确认后再调。
 [Argument]
 dedup_min = input,10,type=number,tag=重复通知冷却(分钟),desc=同一商品在该时间内只弹一次；填 0 则每次进入都弹（同页多个触发点仍只转链一次）
 debug_ping = switch,false,type=boolean,tag=调试心跳与异常通知,desc=打开后目标接口会弹链路心跳和异常诊断，仅排障时开启
 ck_notify = switch,false,type=boolean,tag=CK抓取通知,desc=抓到京东CK时弹通知；默认关闭，只保留转链结果通知
-price_show = switch,true,type=boolean,tag=比价显示,desc=关闭后不再显示比价信息（默认开）
 
 # 修改原因(2026-11-23 v8.4 用户拍板): 全部脚本 URL 直连 raw.githubusercontent.com，不用任何 CDN——
 #   jsdelivr @main 分支指针缓存最长 12h（purge 只清文件缓存不清指针），发版后长时间拉旧脚本；
 #   raw 无缓存层、永远最新，以后发版不用改链接不用换版本号。
-#   发版流程：推 jd_jingfen_convert.js（或 jdjf_price.js）即生效；Loon 里「更新插件」重拉脚本即可。
+#   发版流程：推 jd_jingfen_convert.js 即生效；Loon 里「更新插件」重拉脚本即可。
 
 [Script]
-# ================= 京东比价（门面 jdjf_price_gate.js，内嵌作者原版 jdjf_price.js） =================
-# 用途：api.m.jd.com 的 client.action/api 响应——门面判 functionId（URL 与请求体都查）+ price_show 显示开关，
-#       命中才执行内嵌的作者原版 jdjf_price.js（一字未改，sha256 de3c4a0f…）；debug_ping 下弹触发面诊断
-# 修改原因(2026-11-24 v8.6): 合并插件里比价长期静默不生效、远程无法定位（正则/触发面/脚本位/下载源
-#   都有嫌疑）——改为门面架构一次消除：①触发面放宽到全部 client.action/api 响应（防京东把 functionId
-#   挪进请求体/改查询格式导致窄正则静默失效）②下载源与转链主脚本同一条 raw 通道（转链在跑=必能拉下）
-#   ③用户要求的显示开关 price_show ④自诊断。规则写法按 Loon 官方文档插件示例（script-path 在前、
-#   requires-body=true）。Loon 硬规则：一个响应只跑一条 http-response 脚本，故比价必须并入自家门面。
-http-response ^https?://api\.m\.jd\.com/(client\.action|api) script-path=https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/main/loon/jd-jingfen/jdjf_price_gate.js, requires-body=true, tag=京东比价, argument=[{price_show},{debug_ping}]
-
 # ================= 京粉自返利转链（只占请求侧） =================
 # 用途：api.m.jd.com 请求——脚本内按 functionId 分流：抓 pt_key/pt_pin（只存本地，不外传）；
 #       商品接口弹请求心跳；wareDetailAsyncFloors 请求体带明文 skuId → 直接转链
 # 修改原因(2026-11-22): 带 ?functionId= 查询段的正则真机从未触发，规则只做宽泛匹配，目标判定移到脚本内
 # 修改原因(2026-11-22#3): 加 requires-body=true——楼层触发线要读 $request.body 提 skuId
-# 修改原因(2026-11-23 v8.1): 去掉 api.m.jd.com 的响应规则（让给比价原插件），京粉只保留请求侧三条
 http-request ^https?://api\.m\.jd\.com/ script-path=https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/main/loon/jd-jingfen/jd_jingfen_convert.js, requires-body=true, tag=京粉转链, argument=[{dedup_min},{debug_ping},{ck_notify}]
 
 # 用途：ccc-x.jd.com 广告上报请求——缓存首屏商品接口不发时，其 ext 参数 base64 里带当前商品链接；
@@ -48,9 +35,9 @@ http-request ^https?://ccc-x\.jd\.com/dsp/nc script-path=https://raw.githubuserc
 
 # 用途：京东商品详情页 in.m.jd.com/product/graphext/<sku>.html 的请求——sku 直接取自 URL，转链弹通知
 # 修改原因(2026-11-22#2): 触发点是这个纯路径 URL（不带查询段，避开查询段正则不触发的坑）
-# 修改原因(2026-11-23 v8): 放在请求侧——请求侧不需要响应体，sku 直接取 URL
 http-request ^https?://in\.m\.jd\.com/product/graphext/\d+\.html script-path=https://raw.githubusercontent.com/Alwaysbesideyou/Quantumult-X-Clash/main/loon/jd-jingfen/jd_jingfen_convert.js, tag=京粉转链-详情页REQ, argument=[{dedup_min},{debug_ping},{ck_notify}]
 
 [MITM]
 # 修改原因(2026-11-23 v7.1): 新增 ccc-x.jd.com 广告 SKU 入口；MITM 必须包含该域名，保存后需删除旧插件再重装
+# 说明(2026-11-25 v9): api.m.jd.com 仍需 MITM（抓 CK 用）；与原版比价插件共存无冲突（它管响应、我们管请求）
 hostname = api.m.jd.com, in.m.jd.com, ccc-x.jd.com
